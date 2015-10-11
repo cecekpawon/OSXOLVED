@@ -15,4 +15,4 @@ __for educational purpose only__
 
 #### SIPcfg
 
-> Play with SIP <System Integrity Protection> Configuration values
+> Play with SIP [System Integrity Protection] Configuration values
