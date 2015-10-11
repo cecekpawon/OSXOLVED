@@ -1,4 +1,4 @@
-# OSXOLVED : A set of OSX post-installation shell scripts 
+# OSXOLVED : A set of OSX post-installation scripts
 __for educational purpose only__
 
 #### Clover Build Command
@@ -12,3 +12,7 @@ __for educational purpose only__
 #### Extract FakeSMC from HWSensors
 
 > To extract FakeSMC.kext from HWSensors.pkg
+
+#### SIPcfg
+
+> Play with SIP <System Integrity Protection> Configuration values
