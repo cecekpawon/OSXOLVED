@@ -1,5 +1,8 @@
-# OSXOLVED : A set of OSX post-installation scripts
+# OSXOLVED
+### A set of OSX post-installation scripts
 __for educational purpose only__
+
+--
 
 #### Clover Build Command
 

@@ -104,6 +104,11 @@ compile_gcc() {
   fi
 }
 
+run_fix() {
+  [[ -d "${dEdk2Patch}" ]] && cp -R "${dEdk2Patch}"/* "${dEdk2}"
+  cd "${dEdk2}" && source ./edksetup.sh "BaseTools" &>/dev/null
+}
+
 update_edk2() {
   log "Updating EDK2"
   svn co "${uEdk2}" "${dEdk2}"
@@ -113,8 +118,7 @@ update_clover() {
   if [[ -d "${dEdk2}" && -ef "${dEdk2}/edksetup.sh" ]]; then
     log "Updating Clover"
     svn checkout "${uClover}" "${dClover}"
-    cp -R "${dEdk2Patch}"/* "${dEdk2}"
-    cd "${dEdk2}" && source ./edksetup.sh "BaseTools" &>/dev/null
+    run_fix
   else
     log "No EDK2 sources. Start cloning"
     update_edk2
@@ -149,6 +153,7 @@ EOF`") " sSvn
 compile_clover() {
   log "Compiling Clover";
   if [[ -d "${dClover}" && -ef "${dClover}/ebuild.sh" ]]; then
+    run_fix
     "${dClover}"/ebuild.sh -"${gARCH}"
   else
     log "No Clover sources. Start cloning"

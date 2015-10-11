@@ -31,7 +31,7 @@ final() {
   exit 0
 }
 
-clear && printf "$gHEAD"
+clear && printf "${gHEAD}"
 
 if [[ ! -f $gPKG ]]; then
   printf "Drag <pkg> here & ENTER: "
