@@ -19,3 +19,7 @@ __for educational purpose only__
 #### SIPcfg
 
 > Play with SIP [System Integrity Protection] Configuration values
+
+#### Trad Kext Installer
+
+> 1 time kext install
