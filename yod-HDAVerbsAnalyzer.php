@@ -6,33 +6,25 @@
 
 passthru("clear");
 
-/*
-$verbs = <<<HTML
-21471C10 21471D40 21471E11 21471F90
-21571C20 21571D10 21571E01 21571F01
-21671CF0 21671D00 21671E00 21671F40
-21771CF0 21771D00 21771E00 21771F40
-21871C40 21871D90 21871EA0 21871F90
-21971C60 21971D90 21971E81 21971F02
-21A71C50 21A71D30 21A71E81 21A71F01
-21B71C70 21B71D40 21B71E21 21B71F02
-21E71C90 21E71D61 21E71E4B 21E71F01
-21F71CF0 21F71D00 21F71E00 21F71F40
-21171CF0 21171D00 21171E00 21171F40
-HTML;
+$Terminal = (bool) isset($_ENV["TERM_PROGRAM"]);
 
-$verbs = <<<HTML
-01171F99 01171C10 01171D01 01171E43
-01471C20 01471D40 01471E01 01471F01 01470C02
-01571C30 01571D10 01571E01 01571F01
-01671C40 01671D60 01671E01 01671F01
-01771C50 01771D20 01771E01 01771F01
-01871C60 01871D98 01871EA1 01871F01
-01971C70 01971D9C 01971EA1 01971F02
-01A71C90 01A71D30 01A71E81 01A71F01
-01B71CA0 01B71D4C 01B71E21 01B71F02 01B70C02
-01E71CB0 01E71D61 01E71E45 01E71F01
+if ($Terminal) {
+  $verbs = "";
+} else {
+  /* Change this to parsing via browser */
+  $verbs = <<<HTML
+    01171F99 01171C10 01171D01 01171E43
+    01471C20 01471D40 01471E01 01471F01 01470C02
+    01571C30 01571D10 01571E01 01571F01
+    01671C40 01671D60 01671E01 01671F01
+    01771C50 01771D20 01771E01 01771F01
+    01871C60 01871D98 01871EA1 01871F01
+    01971C70 01971D9C 01971EA1 01971F02
+    01A71C90 01A71D30 01A71E81 01A71F01
+    01B71CA0 01B71D4C 01B71E21 01B71F02 01B70C02
+    01E71CB0 01E71D61 01E71E45 01E71F01
 HTML;
+}
 
 $aColorCode = array(
     "Normal" => "\e[0m",
@@ -63,7 +55,6 @@ $aColorCodeBg = array(
     "Pink" => "\e[48;5;199m",
     "White" => "\e[47m"
   );
-*/
 
 $aPort = array(
     0 => "Jack or ATAPI",
@@ -162,17 +153,17 @@ HCSR;
   die($help);
 }
 
-$verbs = "";
+if ($Terminal) {
+  if (!isset($argv) || (count($argv) <= 1)) help();
+  if (is_file($argv[1])) {
+    $verbs = trim(@file_get_contents($argv[1]));
+  } else {
+    array_shift($argv);
+    $verbs = trim(implode(" ", $argv));
+  }
 
-if (!isset($argv) || (count($argv) <= 1)) help();
-if (is_file($argv[1])) {
-  $verbs = trim(@file_get_contents($argv[1]));
-} else {
-  array_shift($argv);
-  $verbs = trim(implode(" ", $argv));
+  if (!$verbs) help();
 }
-
-if (!$verbs) help();
 
 $verbs = strtolower($verbs);
 
@@ -180,13 +171,12 @@ if (preg_match_all("#([^\s]+)#s", $verbs, $m) && isset($m[1])) {
   $m = $m[1];
   $a1 = array();
 
-
   foreach ($m as $key) {
     $key = preg_replace("#(0x|[^a-f0-9])#", "", $key);
     if (strlen($key) === 8) {
-      preg_match("#^([\d]{1})([a-f0-9]{2})([a-f0-9]{5})$#", $key, $node);
-      if (isset($node[2])) {
-        $a1[$node[2]][] = $key;
+      preg_match("#^([\d]{1})([a-f0-9]{2})([a-f0-9]{5})$#", $key, $n);
+      if (isset($n[2])) {
+        $a1[$n[2]][] = $key;
       }
 
     }
@@ -210,6 +200,7 @@ if (preg_match_all("#([^\s]+)#s", $verbs, $m) && isset($m[1])) {
           $Node = $a[2];
           $VerbCommands = $a[3];
           $VerbData = $a[4];
+
           if ($VerbCommands === "70c") {
             $EAPD["data"] = $VerbData;
             $EAPD["val"] = $k;
@@ -249,11 +240,11 @@ HTML;
 
       $PinDefaultPattern = preg_replace("#(\}\))(.*[\r\n]?+)#", "\\1", $PinDefaultPattern);
 
-      preg_match("#^" . $PinDefaultPattern . "$#i", $PinDefault, $a);
+      #preg_match("#^" . $PinDefaultPattern . "$#i", $PinDefault, $a);
+      preg_match(sprintf("#^%s$#i", $PinDefaultPattern), $PinDefault, $a);
 
       if (count($a) < 8) {
         continue;
-        //dump($PinDefault);
       }
 
       if (count($EAPD)) {
@@ -288,19 +279,19 @@ HTML;
       // Device
       $Type = ord($a[3]);
 
-      if ($Type < 56) // < 0 .. 7
+      if ($Type < 56)       // < 0 .. 7
         $Type = "Out";
-      elseif ($Type > 100) // e .. f
+      elseif ($Type > 100)  // e .. f
         $Type = "-";
-      else // 8 .. 9 | a .. c
+      else                  // 8 .. 9 | a .. c
         $Type = "In";
 
-/*
-      if (array_key_exists($Color, $aColorCodeBg)) {
+
+      if ($Terminal && array_key_exists($Color, $aColorCodeBg)) {
         $fg = in_array($Color, array("Orange", "Yellow", "White")) ? $aColorCode["Black"] : $aColorCode["White"];
         $Color = "{$aColorCodeBg[$Color]} {$fg}{$Color} {$aColorCode['Normal']}";
       }
-*/
+/**/
 
       $res[] = <<<HTML
 Node\t\t: $Node
@@ -325,8 +316,10 @@ HTML;
 
   if (count($res)) {
     $res = implode("\n\n-----------------------------------------------------------------------\n\n", $res);
-    //dump($res);
-    if (!isset($_ENV["TERM_PROGRAM"])) {
+
+    if ($Terminal) {
+      passthru("tabs");
+    } else {
       echo "<xmp>";
     }
 

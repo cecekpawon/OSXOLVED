@@ -97,7 +97,6 @@ boot() {
 compile_gcc() {
   log "Compiling GCC (Need Commandlinetools xCode)"
   if [[ -d "${dClover}" && -ef "${dClover}/buildgcc-${gGCCVer}.sh" ]]; then
-    #cd "${dEdk2}" && ./edksetup.sh && make -C BaseTools/Source/C
     run_fix && make -C BaseTools/Source/C
     cd "${dClover}" && ./buildgcc-$gGCCVer.sh && ./buildnasm.sh && ./buildgettext.sh
   else
