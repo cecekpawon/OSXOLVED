@@ -23,3 +23,7 @@ __for educational purpose only__
 #### Trad Kext Installer
 
 > 1 time kext install
+
+#### HDAVerbs Analyzer
+
+> Parse PinConfig / High Definition Audio Verbs
