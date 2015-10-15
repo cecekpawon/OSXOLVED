@@ -6,16 +6,16 @@
 
 dHome="/Users/$(who am i | awk '{print $1}')"
 
-## START: user defined //--
+## START: user define //--
 
 dSrc="${dHome}/src"
 dDesktop="${dHome}/Desktop"
 dEdk2="${dSrc}/edk2"
 dClover="${dEdk2}/Clover"
 gCloverDrivers=("CLOVERX64" "FSInject" "OsxAptioFixDrv" "OsxFatBinaryDrv")
-gARCH="x64"
+gGCCVer="4.9"
 
-## END: user defined --//
+## END: user define --//
 
 dEdk2Patch="${dClover}/Patches_for_EDK2"
 dCloverPkg="${dClover}/CloverPackage"
@@ -23,7 +23,8 @@ dCloverBoot="${dCloverPkg}/CloverV2/EFI/BOOT"
 dClover64="${dEdk2}/Build/Clover/RELEASE_GCC49/X64"
 
 uEdk2="svn://svn.code.sf.net/p/edk2/code/trunk/edk2"
-uClover="svn://svn.code.sf.net/p/cloverefiboot/code/"
+uClover="svn://svn.code.sf.net/p/cloverefiboot/code"
+uCloverCommits="${uClover}/commit_browser"
 
 vCloverSVN=""
 vCloverCurrent=""
@@ -49,10 +50,11 @@ ${C_MENU}**********************************
 \t\t\t${C_NUM}[1] ${C_MENU}Revert SVN
 \t\t\t${C_NUM}[2] ${C_MENU}Update SVN EDK2
 \t\t\t${C_NUM}[3] ${C_MENU}Update SVN Clover
-\t\t\t${C_NUM}[4] ${C_MENU}Compile Clover
-\t\t\t${C_NUM}[5] ${C_MENU}Copy Binary
-\t\t\t${C_NUM}[6] ${C_MENU}Open Build DIR
-\t\t\t${C_NUM}[7] ${C_MENU}Build PKG Installer
+\t\t\t${C_NUM}[4] ${C_MENU}Browse Clover Commits
+\t\t\t${C_NUM}[5] ${C_MENU}Compile Clover
+\t\t\t${C_NUM}[6] ${C_MENU}Copy Binary
+\t\t\t${C_NUM}[7] ${C_MENU}Open Build DIR
+\t\t\t${C_NUM}[8] ${C_MENU}Build PKG Installer
 ${C_NUM}[X|ENTER] ${C_RED}EXIT
 ${C_MENU}**********************************
 ${C_RED}Pick an option from the menu: ${C_NORMAL}
@@ -94,9 +96,10 @@ boot() {
 
 compile_gcc() {
   log "Compiling GCC (Need Commandlinetools xCode)"
-  if [[ -d "${dClover}" && -ef "${dClover}/buildgcc-4.9.sh" ]]; then
-    cd "${dEdk2}" && ./edksetup.sh && make -C BaseTools/Source/C
-    cd "${dClover}" && ./buildgcc-4.9.sh && ./buildnasm.sh && ./buildgettext.sh
+  if [[ -d "${dClover}" && -ef "${dClover}/buildgcc-${gGCCVer}.sh" ]]; then
+    #cd "${dEdk2}" && ./edksetup.sh && make -C BaseTools/Source/C
+    run_fix && make -C BaseTools/Source/C
+    cd "${dClover}" && ./buildgcc-$gGCCVer.sh && ./buildnasm.sh && ./buildgettext.sh
   else
     log "No EDK2 / Clover sources. Start cloning"
     update_clover
@@ -124,6 +127,11 @@ update_clover() {
     update_edk2
     update_clover
   fi
+}
+
+browse_clover_commits() {
+  log "Browse Clover commits"
+  open "$(echo $uCloverCommits | sed -e 's/^svn.*code\./http:\/\//')"
 }
 
 revert_svn() {
@@ -154,7 +162,7 @@ compile_clover() {
   log "Compiling Clover";
   if [[ -d "${dClover}" && -ef "${dClover}/ebuild.sh" ]]; then
     run_fix
-    "${dClover}"/ebuild.sh -"${gARCH}"
+    "${dClover}"/ebuild.sh -x64
   else
     log "No Clover sources. Start cloning"
     update_clover
@@ -190,10 +198,11 @@ while true; do
        1) go revert_svn;;
        2) go update_edk2;;
        3) go update_clover;;
-       4) go compile_clover;;
-       5) go copy_binary;;
-       6) go open_build_dir;;
-       7) go build_pkg;;
+       4) go browse_clover_commits;;
+       5) go compile_clover;;
+       6) go copy_binary;;
+       7) go open_build_dir;;
+       8) go build_pkg;;
     [xX]) break 1;;
        *) [[ -z $opt ]] && exit || go;; #"$0"
   esac
