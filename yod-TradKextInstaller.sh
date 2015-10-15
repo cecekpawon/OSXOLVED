@@ -10,15 +10,12 @@ gTITLE="Trad Kext Installer"
 gME="@cecekpawon | thrsh.net"
 gDest[1]="/Library/Extensions"
 gDest[2]="/System/Library/Extensions"
-uDest=0
-dDest=""
-kDest=""
 
 
 gHEAD=`cat <<EOF
 ${gTITLE}: ${gME}
 ============================================
-Note: SIP - <scrutil status>
+Note: SIP - <csrutil status>
 Filesystem Protections: disabled
 Kext Signing: disabled (3rd party)
 --------------------------------------------\n\n
@@ -32,6 +29,15 @@ final() {
   gASOUND=$((( $2 )) && echo "Glass" || echo "Basso")
   osascript -e "display notification \"${1}\" with title \"${gTITLE}\" subtitle \"${gME}\" sound name \"${gASOUND}\""
   echo -e "${1}"
+
+  if (( $2 )); then
+    printf "\nReboot now (y/n)? "
+    read choice
+    case "$choice" in
+      [yY]) sudo reboot;;
+    esac
+  fi
+
   exit 0
 }
 
@@ -45,9 +51,11 @@ main() {
 
   if [[ -ed $gKext ]]; then
     read -p "$(printf "`cat <<EOF
+
 Install to:
 [1] ${gDest[1]}
 [2] ${gDest[2]}
+
 Choice:
 EOF`") " uDest
 
@@ -56,10 +64,10 @@ EOF`") " uDest
           dDest="${gDest[${uDest}]}"
           kDest="${dDest}/${gKext##*/}"
 
-          printf "Working.."
+          printf "\nWorking.."
 
           if [[ -ed $kDest ]]; then
-          rm -rf $kDest
+            rm -rf $kDest
           fi
 
           cp -R $gKext ${dDest}
