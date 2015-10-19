@@ -27,33 +27,33 @@ HTML;
 }
 
 $aColorCode = array(
-    "Normal" => "\e[0m",
-    "Bold" => "\e[1m",
-    "Bg" => "\e[100m",
+    "Normal"  => "\e[0m",
+    "Bold"    => "\e[1m",
+    "Bg"      => "\e[100m",
 
-    "Black" => "\e[30m",
-    "Gray" => "\e[37m",
-    "Blue" => "\e[34m",
-    "Green" => "\e[92m",
-    "Red" => "\e[31m",
-    "Orange" => "\e[33m",
-    "Yellow" => "\e[93m",
-    "Purple" => "\e[95m",
-    "Pink" => "\e[33m",
-    "White" => "\e[97m"
+    "Black"   => "\e[30m",
+    "Gray"    => "\e[37m",
+    "Blue"    => "\e[34m",
+    "Green"   => "\e[92m",
+    "Red"     => "\e[31m",
+    "Orange"  => "\e[33m",
+    "Yellow"  => "\e[93m",
+    "Purple"  => "\e[95m",
+    "Pink"    => "\e[33m",
+    "White"   => "\e[97m"
   );
 
 $aColorCodeBg = array(
-    "Black" => "\e[40m",
-    "Gray" => "\e[100m",
-    "Blue" => "\e[104m",
-    "Green" => "\e[42m",
-    "Red" => "\e[101m",
-    "Orange" => "\e[48;5;220m",
-    "Yellow" => "\e[48;5;226m",
-    "Purple" => "\e[45m",
-    "Pink" => "\e[48;5;199m",
-    "White" => "\e[47m"
+    "Black"   => "\e[40m",
+    "Gray"    => "\e[100m",
+    "Blue"    => "\e[104m",
+    "Green"   => "\e[42m",
+    "Red"     => "\e[101m",
+    "Orange"  => "\e[48;5;220m",
+    "Yellow"  => "\e[48;5;226m",
+    "Purple"  => "\e[45m",
+    "Pink"    => "\e[48;5;199m",
+    "White"   => "\e[47m"
   );
 
 $aPort = array(
@@ -135,14 +135,14 @@ $aGroup = range(0,6) + array("f");
 
 /*$aMisc = $aGroup = */$aPosition = array();
 
-function dump($value)
-{
+function dump($value) {
   echo "<xmp>";
   die(var_dump($value));
 }
 
 function help() {
   $FNAME = basename(__FILE__);
+
   $help = <<<HCSR
 Valid args:
   php {$FNAME} <string> (1 line)
@@ -240,7 +240,6 @@ HTML;
 
       $PinDefaultPattern = preg_replace("#(\}\))(.*[\r\n]?+)#", "\\1", $PinDefaultPattern);
 
-      #preg_match("#^" . $PinDefaultPattern . "$#i", $PinDefault, $a);
       preg_match(sprintf("#^%s$#i", $PinDefaultPattern), $PinDefault, $a);
 
       if (count($a) < 8) {
@@ -291,7 +290,6 @@ HTML;
         $fg = in_array($Color, array("Orange", "Yellow", "White")) ? $aColorCode["Black"] : $aColorCode["White"];
         $Color = "{$aColorCodeBg[$Color]} {$fg}{$Color} {$aColorCode['Normal']}";
       }
-/**/
 
       $res[] = <<<HTML
 Node\t\t: $Node

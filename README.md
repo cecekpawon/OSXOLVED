@@ -27,3 +27,7 @@ __for educational purpose only__
 #### HDAVerbs Analyzer
 
 > Parse PinConfig / High Definition Audio Verbs
+
+#### GPUFramebuffers
+
+> Show current available GPU Framebuffers

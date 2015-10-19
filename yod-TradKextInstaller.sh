@@ -31,11 +31,14 @@ final() {
   echo -e "${1}"
 
   if (( $2 )); then
-    printf "\nReboot now (y/n)? "
-    read choice
-    case "$choice" in
-      [yY]) sudo reboot;;
-    esac
+    #printf "\nReboot now (y/n)? "
+    #read choice
+    #case "$choice" in
+    #  [yY]) sudo reboot;;
+    #esac
+
+    #show restart dialog
+    osascript -e 'tell app "loginwindow" to «event aevtrrst»'
   fi
 
   exit 0

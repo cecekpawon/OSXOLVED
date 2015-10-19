@@ -6,6 +6,8 @@
 
 passthru("clear");
 
+if (!isset($_ENV["TERM_PROGRAM"])) die("Run in terminal!");
+
 $DEBUG = $BRUTE = $CSR_VALID_FLAGS = $BOOTFLAGSI = 0;
 $DBGCSRSTR = $DBGBBOOTERSTR = "";
 $FLAGS = array(
@@ -35,6 +37,7 @@ $BOOTFLAGS = array(
 
 function help() {
   $FNAME = basename(__FILE__);
+
   $help = <<<HCSR
 Valid args:
   php \e[34m{$FNAME} \e[31m--help\e[0m
@@ -66,7 +69,9 @@ function print_flags($i, $ret=false) {
       sprintf("%08d", decbin($i)),
       (implode("\n", $a) . "\n\n")
     );
+
   if ($ret) return $s;
+
   echo preg_replace("#!#", "", $s);
 }
 
@@ -103,10 +108,10 @@ else {
   switch ($arg) {
     case '--help':
       help(); break;
-    case '--brute':
-      $DEBUG = $BRUTE = 1; break;
     case '--csrstatus':
       csrstatus(); break;
+    case '--brute':
+      $DEBUG = $BRUTE = 1; break;
     default:
       if (preg_match("#^[a-f0-9]{1,2}$#", $arg)) {
         $DEBUG = (isset($argv[2]) && ((bool) $argv[2]));
@@ -132,7 +137,6 @@ if ($DEBUG) {
   print("{$DBGBBOOTERSTR}\n");
   if ($BRUTE) brute();
 
-  /**/
   # experiment with flags below
   $a = array(
       "CSR_ALLOW_UNTRUSTED_KEXTS",
