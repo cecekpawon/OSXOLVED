@@ -6,7 +6,7 @@
 
 if (isset($_ENV["TERM_PROGRAM"])) die("Run in browser!");
 
-$codecdump = "codec_dump2.txt";
+$codecdump = "codec_dump.txt";
 
 $css = <<<HTML
 <style>
