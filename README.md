@@ -31,3 +31,7 @@ __for educational purpose only__
 #### GPUFramebuffers
 
 > Show current available GPU Framebuffers
+
+#### VerbsInColor
+
+> Show available HDA connection in color like codegraph
