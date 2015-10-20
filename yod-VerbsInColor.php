@@ -4,9 +4,11 @@
 # @cecekpawon 10/17/2015 01:17 AM
 # thrsh.net
 
-if (isset($_ENV["TERM_PROGRAM"])) die("Run in browser!");
+$Terminal = isset($_ENV["TERM_PROGRAM"]);
 
-$codecdump = "codec_dump.txt";
+$codecdump = dirname(__FILE__) . "/codec_dump.txt";
+
+if (!is_file($codecdump)) error();
 
 $css = <<<HTML
 <style>
@@ -19,17 +21,18 @@ td, th {
   border: 1px solid black;
   padding: 0.5rem;
   text-align: left;
-  font-size: 12px;
+  font-size: 14px;
 }
-.hi {
-  color: white;
-}
+
 .head1 {
   background-color: black;
-  color: white;
 }
 .head2 {
-  background-color: lightgrey;
+  background-color: gray;
+}
+
+.hi, .head1, .head2 {
+  color: white;
 }
 </style>
 HTML;
@@ -53,10 +56,8 @@ function toColor($n) {
 function error() {
   global $codecdump;
 
-  die("Error: verify untouched '$codecdump' is in same path!");
+  die("Error: verify untouched '$codecdump' is there!");
 }
-
-if (!is_file($codecdump)) error();
 
 $s = file_get_contents($codecdump);
 
@@ -73,10 +74,12 @@ $Codec = preg_match("#(Codec:\s?[^\r\n]+)#is", $s, $n) ? trim($n[1]) : "Unknown"
 $m = preg_split("#(\sNode\s0x.*?)#is", $s);
 
 if (count($m) < 2) error();
+
 array_shift($m);
 
 foreach ($m as $k) {
   if (!preg_match("#^([0-9a-f]{2})\s\[([^\]]+)#is", $k, $n)) continue;
+
   $n_nid = $n[1];
   $n_nid_int = hexdec($n_nid);
   $n_type = trim($n[2]);
@@ -169,7 +172,25 @@ HTML;
 
 $n_type = $tmp = "";
 $ret = array();
-$b = array("nint", "node", "pindefault", "type", "connector", "port", "color", "defassoc", "seq", "name", "connection", "pinfix", "mixer", "hack", "mic", "eapd");
+$b = array(
+    "nint",
+    "node",
+    "pindefault",
+    "type",
+    "connector",
+    "port",
+    "color",
+    //"defassoc",
+    //"seq",
+    "name",
+    "connection",
+    "pinfix",
+    "mixer",
+    "hack",
+    "mic",
+    "eapd"
+  );
+
 $colspan = count($b) + 1;
 
 //dump($a);
@@ -268,4 +289,11 @@ foreach ($a as $k => $v) {
 if (!count($ret)) error();
 
 $ret = $css . "<h1>$Codec<table>" . implode("\r\n", $ret);
-die($ret);
+
+if ($Terminal) {
+  $Codec = sprintf("/tmp/%s.html", preg_replace("#[^a-z0-9]#i", "_", $Codec));
+  file_put_contents($Codec, $ret);
+  passthru("open '$Codec'");
+} else {
+  die($ret);
+}
