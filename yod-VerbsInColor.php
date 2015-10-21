@@ -4,9 +4,15 @@
 # @cecekpawon 10/17/2015 01:17 AM
 # thrsh.net
 
-$Terminal = isset($_ENV["TERM_PROGRAM"]);
+$codecdumptxt = "codec_dump.txt";
 
-$codecdump = dirname(__FILE__) . "/codec_dump.txt";
+if ($Terminal = isset($_ENV["TERM_PROGRAM"])) {
+ if (isset($argv[1])) {
+    $codecdump = $argv[1];
+ }
+} else {
+  $codecdump = dirname(__FILE__) . "/{$codecdumptxt}";
+}
 
 if (!is_file($codecdump)) error();
 
@@ -54,9 +60,19 @@ function toColor($n) {
 }
 
 function error() {
-  global $codecdump;
+  global $codecdumptxt;
 
-  die("Error: verify untouched '$codecdump' is there!");
+  $FNAME = basename(__FILE__);
+
+  $error = <<<YODA
+Usage:
+Place untouched "$codecdumptxt" in same dir
+- OR -
+php {$FNAME} <linux codecdump>
+
+YODA;
+
+  die($error);
 }
 
 $s = file_get_contents($codecdump);
