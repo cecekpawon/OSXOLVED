@@ -57,17 +57,17 @@ $aColorCodeBg = array(
   );
 
 $aPort = array(
-    0 => "Jack or ATAPI",
-    1 => "No Connection",
-    2 => "Internal",
-    9 => "Internal + Jack"
+      0 => "Jack or ATAPI",
+      1 => "No Connection",
+      2 => "Internal",
+      9 => "Internal + Jack"
   );
 
 $aLocation = array(
-    0 => "Unknown",
-    1 => "Back",
-    2 => "Front",
-    9 => "Internal"
+      0 => "Unknown",
+      1 => "Back",
+      2 => "Front",
+      9 => "Internal"
   );
 
 $aDevice = array(
@@ -133,8 +133,6 @@ $aMisc = array(
 
 $aGroup = range(0,6) + array("f");
 
-/*$aMisc = $aGroup = */$aPosition = array();
-
 function dump($value) {
   echo "<xmp>";
   die(var_dump($value));
@@ -143,12 +141,12 @@ function dump($value) {
 function help() {
   $FNAME = basename(__FILE__);
 
-  $help = <<<HCSR
+  $help = <<<YODA
 Valid args:
   php {$FNAME} <string> (1 line)
   php {$FNAME} <file>
 
-HCSR;
+YODA;
 
   die($help);
 }
@@ -178,7 +176,6 @@ if (preg_match_all("#([^\s]+)#s", $verbs, $m) && isset($m[1])) {
       if (isset($n[2])) {
         $a1[$n[2]][] = $key;
       }
-
     }
   }
 
@@ -258,22 +255,11 @@ HTML;
       $Device = $aDevice[$a[3]];
       $Connector = $aConnector[$a[4]];
       $Color = $aColor[$a[5]];
-      //$Misc = $a[6]; // 0-3
-      $Group = $a[7];  // 0-6f
-      $Position = $a[8];
-
-      if (!isset($aMisc[$a[6]])) {
-        $Misc = "$Misc (custom)";
-      } else {
-        $Misc = $aMisc[$a[6]];
-      }
-
-      $Position = hexdec($Position);
-      $Group = hexdec($Group);
-
-      if (!isset($aGroup[$a[7]])) {
-        $Group = "$Group (custom)";
-      }
+      $Misc = $a[6];  // 0-3
+      if (!isset($aMisc[$Misc])) $Misc = "$Misc (custom)";
+      $Group = hexdec($a[7]); // 0-6f
+      if (!isset($aGroup[$Group])) $Group = "$Group (custom)";
+      $Position = hexdec($a[8]);
 
       // Device
       $Type = ord($a[3]);

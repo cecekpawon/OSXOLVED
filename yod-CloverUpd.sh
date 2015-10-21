@@ -82,7 +82,6 @@ go() {
 
 boot() {
   log "Initializing"
-
   vCloverSVN=$(svn info $uClover | grep Revision: | cut -c11-)
 
   #CloverUpdaterUtility
@@ -117,7 +116,7 @@ update_edk2() {
 }
 
 update_clover() {
-  if [[ -d "${dEdk2}" && -ef "${dEdk2}/edksetup.sh" ]]; then
+  if [[ -ef "${dEdk2}/edksetup.sh" ]]; then
     log "Updating Clover"
     svn checkout "${uClover}" "${dClover}"
     run_fix
@@ -159,7 +158,7 @@ EOF`") " sSvn
 
 compile_clover() {
   log "Compiling Clover";
-  if [[ -d "${dClover}" && -ef "${dClover}/ebuild.sh" ]]; then
+  if [[ -ef "${dClover}/ebuild.sh" ]]; then
     run_fix
     "${dClover}"/ebuild.sh -x64
   else

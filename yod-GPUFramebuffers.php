@@ -41,7 +41,7 @@ function dump($value) {
 function help() {
   $FNAME = basename(__FILE__);
 
-  $help = <<<HCSR
+  $help = <<<YODA
 Valid args:
   php {$FNAME} <fb>
   php {$FNAME} --snb ( AppleIntelSNBGraphicsFB )
@@ -49,7 +49,7 @@ Valid args:
   php {$FNAME} --azul ( AppleIntelFramebufferAzul )
   php {$FNAME} --skylake ( AppleIntelSKLGraphicsFramebuffer )
 
-HCSR;
+YODA;
 
   die($help);
 }
@@ -138,14 +138,6 @@ foreach ($c as $k => $v) {
       case 5:
       case 6:
       case 7:
-        /*
-        +0h frame buffer index (1-byte)
-        +1h port nibble (1-byte)
-        +2h pipe attribute (1-byte)
-        +4h Connector Type (4-byte)
-        +8h Connector attribute (4-byte)
-        */
-
         $ConnType=substr($l, 8, 8);
 
         if (array_key_exists($ConnType,  $ctype)) {

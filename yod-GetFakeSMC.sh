@@ -14,7 +14,6 @@ gNPKG=""
 gHEAD=`cat <<EOF
 ${gTITLE}: ${gME}
 =======================================================
-Note: Your FakeSMC <pkg> dir: ${gDesktopDir}
 Download : http://sourceforge.net/projects/hwsensors/
 -------------------------------------------------------\n\n
 EOF`
@@ -27,36 +26,40 @@ final() {
   gASOUND=$((( $2 )) && echo "Glass" || echo "Basso")
   osascript -e "display notification \"${1}\" with title \"${gTITLE}\" subtitle \"${gME}\" sound name \"${gASOUND}\""
   echo -e "${1}"
-  cd $gDir
-  exit 0
+  exit
 }
 
 clear && printf "${gHEAD}"
 
-if [[ ! -f $gPKG ]]; then
+if [[ ! -ef $gPKG ]]; then
   printf "Drag <pkg> here & ENTER: "
   read gPKG
 fi
 
-if [[ -n $gPKG && -f $gPKG ]]; then
-  printf "\nWorking..\n\n"
-  cd $gDesktopDir
+[[ ! -ef $gPKG ]] && final "${gMSG}"
 
-  gRAW=`basename ${gPKG%.pkg}`
-  gNPKG="FakeSMC.kext"
-  gFPKG="${gRAW}/FakeSMC.pkg"
-  gPYLD="${gFPKG}/Payload"
-  gKEXT="${gFPKG}/${gNPKG}"
+printf "\nWorking..\n\n"
+cd $gDesktopDir
 
-  pkgutil --expand $gPKG $gRAW
-  if [ -f $gPYLD ]; then
-    cat $gPYLD | gunzip -dc | cpio -iu --quiet
-    if [ -d $gKEXT ]; then cp -R $gKEXT; fi
-  fi
+gRAW=`basename ${gPKG%.pkg}`
+gDRAW=`dirname ${gPKG%.pkg}`
+gNPKG="FakeSMC.kext"
+gFPKG="${gRAW}/FakeSMC.pkg"
+gPYLD="${gFPKG}/Payload"
+gKEXT="${gFPKG}/${gNPKG}"
 
-  if [ -d $gRAW ]; then rm -rf $gRAW; fi
-else
-  final "${gMSG}"
+pkgutil --expand $gPKG $gRAW
+
+if [[ -ef $gPYLD ]]; then
+  cat $gPYLD | gunzip -dc | cpio -iu --quiet
+  [[ -d $gKEXT ]] && cp -R $gKEXT
 fi
 
-if [[ -n $gNPKG && -d $gNPKG ]]; then final ":)" 1; else final ":("; fi
+[[ -d $gRAW ]] && rm -rf $gRAW
+
+[[ ! -ef $gNPKG ]] && final ":("
+
+mv $gNPKG $gDRAW &>/dev/null && cd $gDir
+printf "Check new generated <file> in: <target> / \"${gDesktopDir}\" dir\n\n"
+
+final ":)" 1

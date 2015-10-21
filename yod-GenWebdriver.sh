@@ -14,7 +14,6 @@ gNPKG=""
 gHEAD=`cat <<EOF
 ${gTITLE}: ${gME}
 =======================================================
-Note: Your generic <pkg> dir: ${gDesktopDir}
 Download : http://www.nvidia.com/Download/index.aspx
 -------------------------------------------------------\n\n
 EOF`
@@ -27,35 +26,38 @@ final() {
   gASOUND=$((( $2 )) && echo "Glass" || echo "Basso")
   osascript -e "display notification \"${1}\" with title \"${gTITLE}\" subtitle \"${gME}\" sound name \"${gASOUND}\""
   echo -e "${1}"
-  cd $gDir
-  exit 0
+  exit
 }
 
 clear && printf "${gHEAD}"
 
-if [[ ! -f $gPKG ]]; then
+if [[ ! -ef $gPKG ]]; then
   printf "Drag <pkg> here & ENTER: "
   read gPKG
 fi
 
-if [[ -n $gPKG && -f $gPKG ]]; then
-  printf "\nWorking..\n\n"
-  cd $gDesktopDir
+[[ ! -ef $gPKG ]] && final "${gMSG}"
 
-  gRAW=`basename ${gPKG%.pkg}`
-  gDIST="${gRAW}/Distribution"
-  gNPKG="${gRAW}-GENERIC.pkg"
+printf "\nWorking..\n\n"
+cd $gDesktopDir
 
-  pkgutil --expand $gPKG $gRAW
+gRAW=`basename ${gPKG%.pkg}`
+gDRAW=`dirname ${gPKG%.pkg}`
+gDIST="${gRAW}/Distribution"
+gNPKG="${gRAW}-GENERIC.pkg"
 
-  if [ -f $gDIST ]; then
-    sed -i "" "/\(if.*validate.*[^}]\)/d" $gDIST
-    pkgutil --flatten $gRAW $gNPKG
-  fi
+pkgutil --expand $gPKG $gRAW
 
-  if [ -d $gRAW ]; then rm -rf $gRAW; fi
-else
-  final "${gMSG}"
+if [[ -ef $gDIST ]]; then
+  sed -i "" "/\(if.*validate.*[^}]\)/d" $gDIST
+  pkgutil --flatten $gRAW $gNPKG
 fi
 
-if [[ -n $gNPKG && -f $gNPKG ]]; then final ":)" 1; else final ":("; fi
+[[ -d $gRAW ]] && rm -rf $gRAW
+
+[[ ! -ef $gNPKG ]] && final ":("
+
+mv $gNPKG $gDRAW &>/dev/null && cd $gDir
+printf "Check new generated <file> in: <target> / \"${gDesktopDir}\" dir\n\n"
+
+final ":)" 1

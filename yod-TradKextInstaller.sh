@@ -47,12 +47,12 @@ final() {
 main() {
   printf "${gHEAD}"
 
-  if [[ ! -ed $gKext ]]; then
+  if [[ ! -d $gKext ]]; then
     printf "Drag <kext> here & ENTER: "
     read gKext
   fi
 
-  if [[ -ed $gKext ]]; then
+  if [[ -d $gKext ]]; then
     read -p "$(printf "`cat <<EOF
 
 Install to:

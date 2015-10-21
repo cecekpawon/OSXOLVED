@@ -38,7 +38,7 @@ $BOOTFLAGS = array(
 function help() {
   $FNAME = basename(__FILE__);
 
-  $help = <<<HCSR
+  $help = <<<YODA
 Valid args:
   php \e[34m{$FNAME} \e[31m--help\e[0m
   php \e[34m{$FNAME} \e[31m--brute\e[0m
@@ -47,7 +47,7 @@ Valid args:
   php \e[34m{$FNAME} \e[31m11\e[0m
   php \e[34m{$FNAME} \e[31m11 \e[32mtrue\e[0m
 
-HCSR;
+YODA;
 
   die($help);
 }
