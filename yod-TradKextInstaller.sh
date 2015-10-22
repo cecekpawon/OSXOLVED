@@ -5,12 +5,14 @@
 # thrsh.net
 
 gID=$(id -u)
-gPKG="${1}"
+gKext="${1}"
 gTITLE="Trad Kext Installer"
 gME="@cecekpawon | thrsh.net"
+gUser="$(who am i | awk '{print $1}')"
+gDesktopDir="/Users/${gUser}/Desktop"
+gKextBackupDir="${gDesktopDir}/KextsBackup"
 gDest[1]="/Library/Extensions"
 gDest[2]="/System/Library/Extensions"
-
 
 gHEAD=`cat <<EOF
 ${gTITLE}: ${gME}
@@ -69,17 +71,24 @@ EOF`") " uDest
 
           printf "\nWorking.."
 
-          if [[ -ed $kDest ]]; then
+          if [[ -d $kDest ]]; then
+            #gDate = $(date +"%Y-%m-%d_%H:%M:%S")
+            gHashDir="${gKextBackupDir}/$(find $kDest -type f -print0 | xargs -0 md5 -q | md5)"
+            if [[ ! -d $gHashDir ]]; then
+              mkdir -p $gHashDir
+              cp -a $kDest $gHashDir
+            fi
+            sudo chown -R $gUser $gKextBackupDir
             rm -rf $kDest
           fi
 
-          cp -R $gKext ${dDest}
+          cp -R $gKext $dDest
 
           printf "\nRepairing Permissions.."
 
-          sudo chown -R root:wheel "${kDest}"
-          sudo chmod -R 755 "${kDest}"
-          sudo touch "${dDest}"
+          sudo chown -R root:wheel $kDest
+          sudo chmod -R 755 $kDest
+          sudo touch $dDest
 
           printf "\nUpdating Caches..\n"
 
