@@ -17,6 +17,7 @@ gDest[2]="/System/Library/Extensions"
 gHEAD=`cat <<EOF
 ${gTITLE}: ${gME}
 ============================================
+Backup dir: ${gKextBackupDir}
 Note: SIP - <csrutil status>
 Filesystem Protections: disabled
 Kext Signing: disabled (3rd party)
@@ -24,7 +25,8 @@ Kext Signing: disabled (3rd party)
 EOF`
 
 gMSG=`cat <<EOF
-Usage: ./${0##*/} <kext> / DRAG <kext>
+No valid kexts detected!
+Usage: ./${0##*/} <kexts> / DRAG <kexts>
 EOF`
 
 final() {
@@ -46,17 +48,34 @@ final() {
   exit 0
 }
 
+valid() {
+  [[ -d $1 && "${1##*.}" == "kext" ]] && return 0 || return 1
+}
+
 main() {
   printf "${gHEAD}"
 
-  if [[ ! -d $gKext ]]; then
+  gArgs=("$@")
+  gKexts=()
+
+  if [[ "$#" -lt 1 ]]; then
     printf "Drag <kext> here & ENTER: "
-    read gKext
+    read gVar
+    gArgs=($gVar)
   fi
 
-  if [[ -d $gKext ]]; then
-    read -p "$(printf "`cat <<EOF
+  for arg in "${gArgs[@]}"
+  do
+    if valid "$arg"; then
+      gKexts+=("$arg")
+    fi
+  done
 
+  if [[ ${#gKexts[@]} -eq 0 ]]; then
+    final "$gMSG"
+  fi
+
+  read -p "$(printf "`cat <<EOF
 Install to:
 [1] ${gDest[1]}
 [2] ${gDest[2]}
@@ -64,45 +83,49 @@ Install to:
 Choice:
 EOF`") " uDest
 
-    case $uDest in
-      [12])
-          dDest="${gDest[${uDest}]}"
-          kDest="${dDest}/${gKext##*/}"
+  case $uDest in
+    [12])
+        dDest="${gDest[${uDest}]}"
+        ;;
+    *)  final ":("
+        ;;
+  esac
 
-          printf "\nWorking.."
+  printf "\nWorking..\n\n"
+  #printf "Start backup & install:\n"
 
-          if [[ -d $kDest ]]; then
-            #gDate = $(date +"%Y-%m-%d_%H:%M:%S")
-            gHashDir="${gKextBackupDir}/$(find $kDest -type f -print0 | xargs -0 md5 -q | md5)"
-            if [[ ! -d $gHashDir ]]; then
-              mkdir -p $gHashDir
-              cp -a $kDest $gHashDir
-            fi
-            sudo chown -R $gUser $gKextBackupDir
-            rm -rf $kDest
-          fi
+  let i=0
 
-          cp -R $gKext $dDest
+  for gKext in "${gKexts[@]}"
+  do
+    kDest="${dDest}/${gKext##*/}"
+    let i++
 
-          printf "\nRepairing Permissions.."
+    printf "#$i: %s\n" $kDest
 
-          sudo chown -R root:wheel $kDest
-          sudo chmod -R 755 $kDest
-          sudo touch $dDest
+    if [[ -d $kDest ]]; then
+      #gDate = $(date +"%Y-%m-%d_%H:%M:%S")
+      gHashDir="${gKextBackupDir}/$(find $kDest -type f -print0 | xargs -0 md5 -q | md5)"
+      if [[ ! -d $gHashDir ]]; then
+        mkdir -p $gHashDir
+        cp -a $kDest $gHashDir
+      fi
+      sudo chown -R $gUser $gKextBackupDir
+      rm -rf $kDest
+    fi
 
-          printf "\nUpdating Caches..\n"
+    cp -R $gKext $dDest
+    sudo chown -R root:wheel $kDest
+    sudo chmod -R 755 $kDest
+  done
 
-          sudo kextcache -system-prelinked-kernel &>/dev/null
-          sudo kextcache -system-caches &>/dev/null
+  printf "\nRepair Permissions & Update Caches..\n"
 
-          final ":)" 1
-          ;;
+  sudo touch $dDest
+  sudo kextcache -system-prelinked-kernel &>/dev/null
+  sudo kextcache -system-caches &>/dev/null
 
-      *)  final ":(";;
-    esac
-  fi
-
-  final "$gMSG"
+  final ":)" 1
 }
 
 clear
