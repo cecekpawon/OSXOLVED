@@ -35,3 +35,7 @@ __for educational purpose only__
 #### VerbsInColor
 
 > Show available HDA connection in color like codegraph
+
+#### Mount EFI
+
+> Mount all available EFI partition
