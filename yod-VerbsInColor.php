@@ -6,10 +6,10 @@
 
 $codecdumptxt = "codec_dump.txt";
 
-if ($Terminal = isset($_ENV["TERM_PROGRAM"])) {
- if (isset($argv[1])) {
-    $codecdump = $argv[1];
- }
+if ($Terminal = isset($_ENV["TERM_PROGRAM"]) || isset($_SERVER["TERM_PROGRAM"]) ) {
+  if (isset($argv[1])) {
+      $codecdump = $argv[1];
+   }
 } else {
   $codecdump = dirname(__FILE__) . "/{$codecdumptxt}";
 }
@@ -185,7 +185,6 @@ HTML;
   $a[$n_type][$n_nid_int] = $c;
 }
 
-
 $n_type = $tmp = "";
 $ret = array();
 $b = array(
@@ -208,8 +207,6 @@ $b = array(
   );
 
 $colspan = count($b) + 1;
-
-//dump($a);
 
 foreach ($a as $k => $v) {
   if ($k !== $n_type) {
@@ -250,7 +247,12 @@ foreach ($a as $k => $v) {
       case "Audio Input":
         if ($tmp = getIndex($i["connection"], $a["Audio Mixer"])) {
           $i["mic"] = $i["nint"];
-        } else continue 2;
+        } else {
+          //continue 2;
+          if (isset($i["name"])) {
+            $i["mic"] = 1;
+          }
+        }
       break;
     }
 
