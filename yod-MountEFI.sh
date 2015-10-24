@@ -51,7 +51,7 @@ do
   gInfo=$(diskutil info "${gDevice}" | awk '/Media Name:/' | sed -e 's/^.*://' | sed 's/^ *//;s/ *Media//')
 
   aPar+=("${gArg}")
-  #aDisk+=("$gDevice")
+  #aDisk+=("${gDevice}")
   aLabel+=("${gInfo}")
 
   gStr+="[${i}]\t| ${gArg}\t\t| ${gInfo}\n"
@@ -67,7 +67,7 @@ if [[ "${gChoose}" =~ ^[[:digit:]]+$ ]] && [[ $gChoose -lt $gEFITotal ]]; then
   gOEFI=$(df | grep "${gPar}")
   mEFI="/Volumes/EFI(${gPar})"
 
-  printf "\nMounting ${gPar} (on ${gLabel}}) ..\n\n"
+  printf "\nMounting ${gPar} (on ${gLabel}) ..\n\n"
 
   [[ ! -z "${gOEFI}" ]] && diskutil unmount "${gPar}"
   [[ ! -d "${mEFI}" ]] && mkdir "${mEFI}"
