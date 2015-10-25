@@ -61,7 +61,7 @@ main() {
   if [[ "$#" -lt 1 ]]; then
     printf "Drag <kext> here & ENTER: "
     read gVar
-    gArgs=($gVar)
+    gArgs=("${gVar}")
   fi
 
   for arg in "${gArgs[@]}"
