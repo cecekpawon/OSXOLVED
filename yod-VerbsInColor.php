@@ -6,7 +6,7 @@
 
 $codecdumptxt = "codec_dump.txt";
 
-if ($Terminal = isset($_ENV["TERM_PROGRAM"]) || isset($_SERVER["TERM_PROGRAM"]) ) {
+if ($Terminal = isset($_SERVER["TERM_PROGRAM"])) {
   if (isset($argv[1])) {
       $codecdump = $argv[1];
    }

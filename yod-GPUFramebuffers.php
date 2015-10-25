@@ -6,7 +6,7 @@
 
 passthru("clear");
 
-if (!isset($_ENV["TERM_PROGRAM"])) die("Run in terminal!");
+if (!isset($_SERVER["TERM_PROGRAM"])) die("Run in terminal!");
 
 /*
   Inpiration: Apple Intel AMD/ATI Framebuffers by l0rd SJ_UnderWater

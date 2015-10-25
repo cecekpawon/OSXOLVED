@@ -6,7 +6,7 @@
 
 passthru("clear");
 
-$Terminal = (bool) isset($_ENV["TERM_PROGRAM"]);
+$Terminal = (bool) isset($_SERVER["TERM_PROGRAM"]);
 
 if ($Terminal) {
   $verbs = "";

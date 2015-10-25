@@ -6,7 +6,7 @@
 
 passthru("clear");
 
-if (!isset($_ENV["TERM_PROGRAM"])) die("Run in terminal!");
+if (!isset($_SERVER["TERM_PROGRAM"])) die("Run in terminal!");
 
 $DEBUG = $BRUTE = $CSR_VALID_FLAGS = $BOOTFLAGSI = 0;
 $DBGCSRSTR = $DBGBBOOTERSTR = "";
