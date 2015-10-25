@@ -114,7 +114,7 @@ EOF`") " uDest
       rm -rf $kDest
     fi
 
-    cp -R $gKext $dDest
+    cp -R "${gKext}" $dDest
     sudo chown -R root:wheel $kDest
     sudo chmod -R 755 $kDest
   done
