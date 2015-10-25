@@ -35,15 +35,21 @@ aPar=()
 aLabel=()
 gStr=""
 i=0
+C_BLUE="\e[38;5;27m"
+C_BLACK="\e[0m"
 
 printf "`cat <<EOF
 Getting EFI disks ..
+
 Choose one from available devices:
+[${C_BLUE}#${C_BLACK}] is current startup disk!
 
 ----+-----------+---------------------------
 [#]\t| Partition\t| Label
 ----+-----------+---------------------------\n
 EOF`"
+
+gStartup="$(diskutil info / | awk '/Identifier/' | grep -o -e disk[[:digit:]])"
 
 for gArg in "${aEFI[@]}"
 do
@@ -54,7 +60,10 @@ do
   #aDisk+=("${gDevice}")
   aLabel+=("${gInfo}")
 
-  gStr+="[${i}]\t| ${gArg}\t\t| ${gInfo}\n"
+  [[ "${gStartup}" == "${gDevice}" ]] && C_HI=$C_BLUE || C_HI=$C_BLACK
+
+  gStr+="[${C_HI}${i}${C_BLACK}]\t| ${C_HI}${gArg}${C_BLACK}\t\t| ${C_HI}${gInfo}${C_BLACK}\n"
+
   let i++
 done
 
