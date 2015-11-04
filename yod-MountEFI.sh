@@ -17,7 +17,7 @@ Usages\t: ./${gScriptName} [-Options]
 \t\t\t\t: ./${gScriptName} -aou
 Options\t: -a] auto-mount
 \t\t\t\t: -o] auto-open
-\t\t\t\t: -u] auto-update
+\t\t\t\t: -u] update-scripts
 --------------------------------------------
 Inspiration: Clover Configurator, #longlive!
 --------------------------------------------\n\n
