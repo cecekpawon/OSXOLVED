@@ -4,6 +4,11 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
+gVer=1.0
+gTITLE="Clover Build Command v${gVer}"
+gME="@cecekpawon | thrsh.net"
+gRepo="https://github.com/cecekpawon/OSXOLVED"
+gScriptName=${0##*/}
 dHome="/Users/$(who am i | awk '{print $1}')"
 
 ## START: user define //--
@@ -41,22 +46,24 @@ menu() {
   tabs -2
 
   printf "`cat <<EOF
-${C_MENU}**********************************
-Clover Build Command ${C_NORMAL}| ${C_RED}@cecekpawon
-${C_MENU}----------------------------------
+${C_MENU}****************************************************
+${gTITLE} ${C_NORMAL}: ${C_RED}${gME}
+${C_MENU}----------------------------------------------------
 Revision SVN: ${C_HI}${vCloverSVN} ${C_MENU}| Current: ${vCloverCurrent}
-${C_MENU}**********************************
-\t\t\t${C_NUM}[0] ${C_MENU}Compile GCC
-\t\t\t${C_NUM}[1] ${C_MENU}Revert SVN
-\t\t\t${C_NUM}[2] ${C_MENU}Update SVN EDK2
-\t\t\t${C_NUM}[3] ${C_MENU}Update SVN Clover
-\t\t\t${C_NUM}[4] ${C_MENU}Browse Clover Commits
-\t\t\t${C_NUM}[5] ${C_MENU}Compile Clover
-\t\t\t${C_NUM}[6] ${C_MENU}Copy Binary
-\t\t\t${C_NUM}[7] ${C_MENU}Open Build DIR
-\t\t\t${C_NUM}[8] ${C_MENU}Build PKG Installer
-${C_NUM}[X|ENTER] ${C_RED}EXIT
-${C_MENU}**********************************
+${C_MENU}****************************************************
+\t\t\t ${C_NUM}[0] ${C_MENU}Compile GCC
+\t\t\t ${C_NUM}[1] ${C_MENU}Revert SVN
+\t\t\t ${C_NUM}[2] ${C_MENU}Update SVN EDK2
+\t\t\t ${C_NUM}[3] ${C_MENU}Update SVN Clover
+\t\t\t ${C_NUM}[4] ${C_MENU}Browse Clover Commits
+\t\t\t ${C_NUM}[5] ${C_MENU}Compile Clover
+\t\t\t ${C_NUM}[6] ${C_MENU}Copy Binary
+\t\t\t ${C_NUM}[7] ${C_MENU}Open Build DIR
+\t\t\t ${C_NUM}[8] ${C_MENU}Build PKG Installer
+\t\t\t ${C_NUM}[9] ${C_MENU}Update Scripts
+\t\t\t${C_NUM}[10] ${C_MENU}Browse Scripts Repo
+ ${C_NUM}[X|ENTER] ${C_RED}EXIT
+${C_MENU}****************************************************
 ${C_RED}Pick an option from the menu: ${C_NORMAL}
 EOF`"
 
@@ -82,6 +89,7 @@ go() {
 
 boot() {
   log "Initializing"
+
   vCloverSVN=$(svn info $uClover | grep Revision: | cut -c11-)
 
   #CloverUpdaterUtility
@@ -95,6 +103,7 @@ boot() {
 
 compile_gcc() {
   log "Compiling GCC (Need Commandlinetools xCode)"
+
   if [[ -d "${dClover}" && -ef "${dClover}/buildgcc-${gGCCVer}.sh" ]]; then
     run_fix && make -C BaseTools/Source/C
     cd "${dClover}" && ./buildgcc-$gGCCVer.sh && ./buildnasm.sh && ./buildgettext.sh
@@ -112,16 +121,19 @@ run_fix() {
 
 update_edk2() {
   log "Updating EDK2"
+
   svn co "${uEdk2}" "${dEdk2}"
 }
 
 update_clover() {
   if [[ -ef "${dEdk2}/edksetup.sh" ]]; then
     log "Updating Clover"
+
     svn checkout "${uClover}" "${dClover}"
     run_fix
   else
     log "No EDK2 sources. Start cloning"
+
     update_edk2
     update_clover
   fi
@@ -129,6 +141,7 @@ update_clover() {
 
 browse_clover_commits() {
   log "Browse Clover commits"
+
   open "$(echo $uCloverCommits | sed -e 's/^svn.*code\./http:\/\//')"
 }
 
@@ -157,12 +170,14 @@ EOF`") " sSvn
 }
 
 compile_clover() {
-  log "Compiling Clover";
+  log "Compiling Clover"
+
   if [[ -ef "${dClover}/ebuild.sh" ]]; then
     run_fix
     "${dClover}"/ebuild.sh -x64
   else
     log "No Clover sources. Start cloning"
+
     update_clover
     compile_clover
   fi
@@ -170,6 +185,7 @@ compile_clover() {
 
 copy_binary() {
   log "Copy binary to ${dDesktop}"
+
   for drv in "${gCloverDrivers[@]}"
   do
     [[ -ef "${dClover64}/$drv.efi" ]] && cp "${dClover64}/$drv.efi" "${dDesktop}/$drv-64.efi"
@@ -179,13 +195,60 @@ copy_binary() {
 
 open_build_dir() {
   log "Open Build Directory"
+
   [[ -d "${dCloverBoot}" ]] && open "${dCloverBoot}"
   [[ -d "${dClover64}" ]] && open "${dClover64}"
 }
 
 build_pkg() {
-  log "Build PKG Installer";
+  log "Build PKG Installer"
+
   [[ -ef "${dCloverPkg}/makepkg" ]] && "${dCloverPkg}"/makepkg
+}
+
+update_scripts() {
+  log "Looking for updates"
+
+  gTmp=$(curl -sS "${gRepo}/versions.json" | awk '/'$gScriptName'/ {print $2}' | sed -e 's/[^0-9\.]//g')
+
+  if [[ $gTmp > $gVer ]]; then
+    echo "Update currently available (v${gTmp}) .."
+
+    if [[ -w "${0}" ]]; then
+      gBkp="${0}.bak"
+      gTmp="${0}.tmp"
+
+      echo "Create script backup: ${gBkp}"
+
+      curl -sS "${gRepo}/${gScriptName}" -o "${gTmp}"
+      gStr=`cat ${gTmp}`
+
+      if [[ "${gStr}" =~ "bash" ]]; then
+        echo "Update successfully :))"
+
+        cp "${0}" "${gBkp}" && mv "${gTmp}" "${0}" && chmod +x "${0}"
+
+        read -p "Relaunch script now? [yY] " gChoose
+        case "${gChoose}" in
+          [yY]) exec "${0}" "${@}";;
+        esac
+
+        exit
+      else
+        echo "Update failed :(("
+      fi
+    else
+      echo "Scripts read-only :(("
+    fi
+  else
+    echo "Scripts up-to-date! :))"
+  fi
+}
+
+browse_scripts_repo() {
+  log "Browse scripts repo"
+
+  open ${gRepo}
 }
 
 go boot true
@@ -201,6 +264,8 @@ while true; do
        6) go copy_binary;;
        7) go open_build_dir;;
        8) go build_pkg;;
+       9) go update_scripts;;
+      10) go browse_scripts_repo;;
     [xX]) break 1;;
        *) [[ -z $opt ]] && exit || go;; #"$0"
   esac

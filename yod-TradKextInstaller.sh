@@ -117,15 +117,15 @@ main() {
 
   for arg in "${gArgs[@]}"
   do
-    if [[ "$arg" =~ ^\-[uU]$ ]]; then
+    if [[ "${arg}" =~ ^\-[uU]$ ]]; then
       update
-    elif valid "$arg"; then
-      gKexts+=("$arg")
+    elif valid "${arg}"; then
+      gKexts+=("${arg}")
     fi
   done
 
   if [[ ${#gKexts[@]} -eq 0 ]]; then
-    final "$gMSG"
+    final "${gMSG}"
   fi
 
   read -p "$(printf "`cat <<EOF
