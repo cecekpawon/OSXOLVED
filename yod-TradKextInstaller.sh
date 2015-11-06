@@ -4,7 +4,7 @@
 # @cecekpawon 10/15/2015 00:13 AM
 # thrsh.net
 
-gVer=1.0
+gVer=1.1
 gID=$(id -u)
 gKext="${1}"
 gTITLE="Trad Kext Installer v${gVer}"
@@ -19,16 +19,23 @@ gDest[2]="/System/Library/Extensions"
 gDest[3]="Other"
 bPermissions=1
 
+C_MENU="\e[36m"
+C_BLUE="\e[38;5;27m"
+C_BLACK="\e[0m"
+C_RED="\e[31m"
+C_NUM="\e[33m"
+
 gHEAD=`cat <<EOF
-${gTITLE}: ${gME}
-=================================================
-Usages\t: ./${gScriptName} [<kexts>] -u
-Options\t: -u] update-scripts
-Backup\t: ${gKextBackupDir}
-Note\t\t: SIP - <csrutil status>
-\t\t\t\t\t- Filesystem Protections: disabled
-\t\t\t\t\t- Kext Signing: disabled (3rd party)
--------------------------------------------------\n\n
+${C_MENU}==================================================
+${C_BLUE}${gTITLE} : ${C_RED}${gME}
+${C_MENU}==================================================
+${C_MENU}Usages\t: ${C_BLUE}./${gScriptName} ${C_MENU}[${C_NUM}<kexts>${C_MENU}] ${C_NUM}-u
+${C_MENU}Options\t: ${C_NUM}-u${C_MENU}] update-scripts
+${C_MENU}Backup\t: ${C_NUM}${gKextBackupDir}
+${C_MENU}Note\t\t: SIP - ${C_NUM}<csrutil status>
+${C_MENU}\t\t\t\t\t- Filesystem Protections: disabled
+${C_MENU}\t\t\t\t\t- Kext Signing: disabled (3rd party)
+${C_MENU}--------------------------------------------------${C_BLACK}\n\n
 EOF`
 
 gMSG=`cat <<EOF

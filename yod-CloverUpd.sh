@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=1.0
+gVer=1.1
 gTITLE="Clover Build Command v${gVer}"
 gME="@cecekpawon | thrsh.net"
 gRepo="https://github.com/cecekpawon/OSXOLVED"
@@ -38,6 +38,7 @@ C_NORMAL="\e[0m"
 C_MENU="\e[36m"
 C_NUM="\e[33m"
 C_RED="\e[31m"
+C_BLUE="\e[38;5;27m"
 C_BOLD="\e[1m"
 C_HI=""
 
@@ -46,11 +47,11 @@ menu() {
   tabs -2
 
   printf "`cat <<EOF
-${C_MENU}****************************************************
-${gTITLE} ${C_NORMAL}: ${C_RED}${gME}
-${C_MENU}----------------------------------------------------
+${C_MENU}====================================================
+${C_BLUE}${gTITLE} ${C_MENU}: ${C_RED}${gME}
+${C_MENU}====================================================
 Revision SVN: ${C_HI}${vCloverSVN} ${C_MENU}| Current: ${vCloverCurrent}
-${C_MENU}****************************************************
+${C_MENU}----------------------------------------------------
 \t\t\t ${C_NUM}[0] ${C_MENU}Compile GCC
 \t\t\t ${C_NUM}[1] ${C_MENU}Revert SVN
 \t\t\t ${C_NUM}[2] ${C_MENU}Update SVN EDK2
@@ -63,7 +64,7 @@ ${C_MENU}****************************************************
 \t\t\t ${C_NUM}[9] ${C_MENU}Update Scripts
 \t\t\t${C_NUM}[10] ${C_MENU}Browse Scripts Repo
  ${C_NUM}[X|ENTER] ${C_RED}EXIT
-${C_MENU}****************************************************
+${C_MENU}----------------------------------------------------
 ${C_RED}Pick an option from the menu: ${C_NORMAL}
 EOF`"
 

@@ -4,23 +4,30 @@
 # @cecekpawon 10/24/2015 14:13 PM
 # thrsh.net
 
-gVer=1.0
+gVer=1.1
 gTITLE="Mount EFI v${gVer}"
 gME="@cecekpawon | thrsh.net"
 gRepo="https://github.com/cecekpawon/OSXOLVED"
 gScriptName=${0##*/}
 
+C_MENU="\e[36m"
+C_BLUE="\e[38;5;27m"
+C_BLACK="\e[0m"
+C_RED="\e[31m"
+C_NUM="\e[33m"
+
 gHEAD=`cat <<EOF
-${gTITLE}: ${gME}
-============================================
-Usages\t: ./${gScriptName} [-Options]
-\t\t\t\t: ./${gScriptName} -aou
-Options\t: -a] auto-mount
-\t\t\t\t: -o] auto-open
-\t\t\t\t: -u] update-scripts
---------------------------------------------
-Inspiration: Clover Configurator, #longlive!
---------------------------------------------\n\n
+${C_MENU}============================================
+${C_BLUE}${gTITLE} ${C_MENU}: ${C_RED}${gME}
+${C_MENU}============================================
+${C_MENU}Usages\t: ${C_BLUE}./${gScriptName} ${C_MENU}[${C_NUM}-Options${C_MENU}]
+${C_MENU}\t\t\t\t: ${C_BLUE}./${gScriptName} ${C_NUM}-aou
+${C_MENU}Options\t: ${C_NUM}-a${C_MENU}] auto-mount
+${C_MENU}\t\t\t\t: ${C_NUM}-o${C_MENU}] auto-open
+${C_MENU}\t\t\t\t: ${C_NUM}-u${C_MENU}] update-scripts
+${C_MENU}--------------------------------------------
+${C_MENU}Inspiration: Clover Configurator, #longlive!
+${C_MENU}--------------------------------------------${C_BLACK}\n\n
 EOF`
 
 gMSG=`cat <<EOF
@@ -34,8 +41,6 @@ aDisk=()
 aPar=()
 aLabel=()
 i=0
-C_BLUE="\e[38;5;27m"
-C_BLACK="\e[0m"
 
 tabs -2
 
