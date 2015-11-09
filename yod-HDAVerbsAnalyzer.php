@@ -1,3 +1,4 @@
+#!/usr/bin/php
 <?php
 
 # HDAVerbs Analyzer
@@ -143,8 +144,8 @@ function help() {
 
   $help = <<<YODA
 Valid args:
-  php {$FNAME} <string> (1 line)
-  php {$FNAME} <file>
+  {$FNAME} <string> (1 line)
+  {$FNAME} <file>
 
 YODA;
 

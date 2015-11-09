@@ -1,3 +1,4 @@
+#!/usr/bin/php
 <?php
 
 # SIPcfg
@@ -40,12 +41,12 @@ function help() {
 
   $help = <<<YODA
 Valid args:
-  php \e[34m{$FNAME} \e[31m--help\e[0m
-  php \e[34m{$FNAME} \e[31m--brute\e[0m
-  php \e[34m{$FNAME} \e[31m--csrstatus\e[0m
+  \e[34m{$FNAME} \e[31m--help\e[0m
+  \e[34m{$FNAME} \e[31m--brute\e[0m
+  \e[34m{$FNAME} \e[31m--csrstatus\e[0m
 * BIT (bool) debug:
-  php \e[34m{$FNAME} \e[31m11\e[0m
-  php \e[34m{$FNAME} \e[31m11 \e[32mtrue\e[0m
+  \e[34m{$FNAME} \e[31m11\e[0m
+  \e[34m{$FNAME} \e[31m11 \e[32mtrue\e[0m
 
 YODA;
 
@@ -141,8 +142,8 @@ if ($DEBUG) {
   $a = array(
       "CSR_ALLOW_UNTRUSTED_KEXTS",
       "CSR_ALLOW_UNRESTRICTED_FS",
-      //"CSR_ALLOW_TASK_FOR_PID",
-      //"CSR_ALLOW_KERNEL_DEBUGGER",
+      "CSR_ALLOW_TASK_FOR_PID",
+      "CSR_ALLOW_KERNEL_DEBUGGER",
       "CSR_ALLOW_APPLE_INTERNAL",
       //"CSR_ALLOW_UNRESTRICTED_DTRACE",
       //"CSR_ALLOW_UNRESTRICTED_NVRAM",

@@ -1,3 +1,4 @@
+#!/usr/bin/php
 <?php
 
 # VerbsInColor
@@ -66,9 +67,9 @@ function error() {
 
   $error = <<<YODA
 Usage:
-Place untouched "$codecdumptxt" in same dir
+{$FNAME} (place untouched "$codecdumptxt" in same dir)
 - OR -
-php {$FNAME} <linux codecdump>
+{$FNAME} <linux codecdump>
 
 YODA;
 

@@ -1,3 +1,4 @@
+#!/usr/bin/php
 <?php
 
 # GPUFramebuffers
@@ -43,11 +44,12 @@ function help() {
 
   $help = <<<YODA
 Valid args:
-  php {$FNAME} <fb>
-  php {$FNAME} --snb ( AppleIntelSNBGraphicsFB )
-  php {$FNAME} --capri ( AppleIntelFramebufferCapri )
-  php {$FNAME} --azul ( AppleIntelFramebufferAzul )
-  php {$FNAME} --skylake ( AppleIntelSKLGraphicsFramebuffer )
+  {$FNAME} <fb>:
+Ex:
+  {$FNAME} --snb ( AppleIntelSNBGraphicsFB )
+  {$FNAME} --capri ( AppleIntelFramebufferCapri )
+  {$FNAME} --azul ( AppleIntelFramebufferAzul )
+  {$FNAME} --skylake ( AppleIntelSKLGraphicsFramebuffer )
 
 YODA;
 
