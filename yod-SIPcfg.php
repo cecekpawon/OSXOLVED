@@ -5,12 +5,22 @@
 # @cecekpawon 09/30/2015 14:36 PM
 # thrsh.net
 
+$gVer="1.1";
+$gTITLE="SIP Cfg v{$gVer}";
+$gUname="cecekpawon";
+$gME="@{$gUname} | thrsh.net";
+$gBase="OSXOLVED";
+$gRepo="https://github.com/{$gUname}/{$gBase}";
+$gRepoRAW="https://raw.githubusercontent.com/{$gUname}/{$gBase}/master";
+
 passthru("clear");
 
 if (!isset($_SERVER["TERM_PROGRAM"])) die("Run in terminal!");
 
-$DEBUG = $BRUTE = $CSR_VALID_FLAGS = $BOOTFLAGSI = 0;
+$CSR_VALID_FLAGS = $BOOTFLAGSI = 0;
+$BIT = $DEBUG = $BRUTE = FALSE;
 $DBGCSRSTR = $DBGBBOOTERSTR = "";
+$BITS_ARR = array();
 $FLAGS = array(
     "CSR_ALLOW_UNTRUSTED_KEXTS"         => (1 << 0), // 1
     "CSR_ALLOW_UNRESTRICTED_FS"         => (1 << 1), // 2
@@ -36,17 +46,33 @@ $BOOTFLAGS = array(
   );
 */
 
+$gHEAD = <<<YODA
+\e[34m======================================================================
+$gTITLE : $gME
+======================================================================\e[0m\n\n
+YODA;
+
+echo $gHEAD;
+
 function help() {
+  global $FLAGS;
+
   $FNAME = basename(__FILE__);
+
+  $FLAGS = array_keys($FLAGS);
 
   $help = <<<YODA
 Valid args:
+* DEBUG:
   \e[34m{$FNAME} \e[31m--help\e[0m
+  \e[34m{$FNAME} \e[31m--update\e[0m
   \e[34m{$FNAME} \e[31m--brute\e[0m
   \e[34m{$FNAME} \e[31m--csrstatus\e[0m
-* BIT (bool) debug:
+* BIT (hex):
   \e[34m{$FNAME} \e[31m11\e[0m
-  \e[34m{$FNAME} \e[31m11 \e[32mtrue\e[0m
+  \e[34m{$FNAME} \e[31m0x11\e[0m
+* FLAGS:
+  \e[34m{$FNAME} \e[31m--{$FLAGS[0]} (try --brute: more flags)\e[0m
 
 YODA;
 
@@ -76,6 +102,38 @@ function print_flags($i, $ret=false) {
   echo preg_replace("#!#", "", $s);
 }
 
+function isJson($str) {
+ $rtn = @json_decode($str, TRUE);
+ return json_last_error() == JSON_ERROR_NONE ? $rtn : "";
+}
+
+function update() {
+  global $gVer, $gRepoRAW;
+
+  echo "Looking for updates ..\n";
+
+  $FNAME = basename(__FILE__);
+
+  $json = file_get_contents("{$gRepoRAW}/versions.json");
+  if (!($json = isJson($json))) die("Update failed :((\n");
+  if (!isset($json[$FNAME])) die("Update failed :((\n");
+  $gTmp = $json[$FNAME];
+  if (version_compare($gVer, $gTmp, '<')) {
+    echo "Update currently available (v{$gTmp}) ..\n";
+    $gStr = @file_get_contents("{$gRepoRAW}/{$FNAME}");
+    if ($gStr) {
+      $fp = fopen(__FILE__, "w");
+      fputs($fp, $gStr);
+      fclose($fp);
+      die("Update successfully :))\n");
+    } else {
+      die("Update failed :((\n");
+    }
+  } else {
+    die("Scripts up-to-date! :))\n");
+  }
+}
+
 function brute() {
   global $CSR_VALID_FLAGS;
 
@@ -96,7 +154,7 @@ function brute() {
 }
 
 function csrstatus() {
-  die(passthru("csrutil status"));
+  die(passthru("clear && csrutil status"));
 }
 
 function print_header($s) {
@@ -105,20 +163,41 @@ function print_header($s) {
 
 if (!isset($argv) || (count($argv) <= 1)) help();
 else {
-  $arg = trim(strtolower($argv[1]));
-  switch ($arg) {
-    case '--help':
-      help(); break;
-    case '--csrstatus':
-      csrstatus(); break;
-    case '--brute':
-      $DEBUG = $BRUTE = 1; break;
-    default:
-      if (preg_match("#^[a-f0-9]{1,2}$#", $arg)) {
-        $DEBUG = (isset($argv[2]) && ((bool) $argv[2]));
-        $BIT = $arg;
-      } else help();
+  array_shift($argv);
+  foreach ($argv as $arg) {
+    $arg = trim(strtolower($arg));
+    switch ($arg) {
+      case '--help':
+        help(); break 2;
+      case '--update':
+        update(); break 2;
+      case '--csrstatus':
+        csrstatus(); break 2;
+      case '--brute':
+        $BRUTE = TRUE; break 2;
+      default:
+        if (preg_match("#^(0x)?([a-f0-9]{1,2})$#i", $arg)) {
+          $BIT = $arg;
+        } elseif (preg_match("#(csr_allow+)#i", implode(" ", $argv))) {
+          foreach ($argv as $val) {
+            $val = trim(strtoupper(preg_replace("#[^a-z_]#i", "", $val)));
+            if (array_key_exists($val, $FLAGS)) {
+              $BITS_ARR[] = $val;
+            }
+          }
+          if (count($BITS_ARR)) {
+            $DEBUG = TRUE;
+            break 2;
+          }
+        }
+    }
   }
+
+  if (
+      ($DEBUG === FALSE) &&
+      ($BIT === FALSE) &&
+      ($BRUTE === FALSE)
+    ) help();
 }
 
 foreach ($FLAGS as $k => $v) {
@@ -126,37 +205,37 @@ foreach ($FLAGS as $k => $v) {
 
   $CSR_VALID_FLAGS = $k ? $v : ($CSR_VALID_FLAGS | $v);
 
-  if ($DEBUG) {
+  if ($DEBUG || $BRUTE) {
     $DBGCSRSTR .= sprintf("{$k}: \e[34m%d\e[0m | \e[34m0x%02x\e[0m\n", $v, $v);
   }
 }
 
-if ($DEBUG) {
+#print_header("BOOTER CFG");
+#print("{$DBGBBOOTERSTR}\n");
+
+if ($DEBUG || $BRUTE) {
   print_header("CSR_VALID_FLAGS");
   print("{$DBGCSRSTR}\n");
-  print_header("BOOTER CFG");
-  print("{$DBGBBOOTERSTR}\n");
+
   if ($BRUTE) brute();
+  elseif(count($BITS_ARR)) {
+    # With given user flags
+    $a = $BITS_ARR;
+    $b = array(); foreach ($a as $k) { $b[] = constant($k); }
+    $c = array_sum(array_unique($b));
 
-  # experiment with flags below
-  $a = array(
-      "CSR_ALLOW_UNTRUSTED_KEXTS",
-      "CSR_ALLOW_UNRESTRICTED_FS",
-      "CSR_ALLOW_TASK_FOR_PID",
-      "CSR_ALLOW_KERNEL_DEBUGGER",
-      "CSR_ALLOW_APPLE_INTERNAL",
-      //"CSR_ALLOW_UNRESTRICTED_DTRACE",
-      //"CSR_ALLOW_UNRESTRICTED_NVRAM",
-      //"CSR_ALLOW_DEVICE_CONFIGURATION"
-    );
+    print_header("USER_FLAGS");
+    printf(
+        "(%s) = %s\n\n",
+        ("\e[34m" . implode("\e[0m | \e[34m", $a) . "\e[0m"),
+        sprintf("\e[34m%d\e[0m | \e[34m0x%02x\e[0m", $c, $c)
+      );
 
-  $b = array(); foreach ($a as $k) { $b[] = constant($k); }
-  $c = array_sum(array_unique($b));
-  print_header("DEBUG TEST (read source)");
-  printf("(%s) = %s\n\n", ("\e[34m" . implode("\e[0m | \e[34m", $a) . "\e[0m"), sprintf("\e[34m%d\e[0m | \e[34m0x%02x\e[0m", $c, $c));
-
-  print_flags($c);
+    die(print_flags($c));
+  } else {
+    help();
+  }
 }
 
-print_header("INPUT");
+print_header("INPUT_FLAGS");
 print_flags(hexdec($BIT));

@@ -4,10 +4,13 @@
 # @cecekpawon 10/24/2015 14:13 PM
 # thrsh.net
 
-gVer=1.1
+gVer=1.2
 gTITLE="Mount EFI v${gVer}"
-gME="@cecekpawon | thrsh.net"
-gRepo="https://github.com/cecekpawon/OSXOLVED"
+gUname="cecekpawon"
+gME="@${gUname} | thrsh.net"
+gBase="OSXOLVED"
+gRepo="https://github.com/${gUname}/${gBase}"
+gRepoRAW="https://raw.githubusercontent.com/${gUname}/${gBase}/master"
 gScriptName=${0##*/}
 
 C_MENU="\e[36m"
@@ -65,7 +68,7 @@ done
 if [[ $gUpdate -ne 0 ]]; then
   echo "Looking for updates .."
 
-  gTmp=$(curl -sS "${gRepo}/versions.json" | awk '/'$gScriptName'/ {print $2}' | sed -e 's/[^0-9\.]//g')
+  gTmp=$(curl -sS "${gRepoRAW}/versions.json" | awk '/'$gScriptName'/ {print $2}' | sed -e 's/[^0-9\.]//g')
 
   if [[ $gTmp > $gVer ]]; then
     echo "Update currently available (v${gTmp}) .."
@@ -76,7 +79,7 @@ if [[ $gUpdate -ne 0 ]]; then
 
       echo "Create script backup: ${gBkp}"
 
-      curl -sS "${gRepo}/${gScriptName}" -o "${gTmp}"
+      curl -sS "${gRepoRAW}/${gScriptName}" -o "${gTmp}"
       gStr=`cat ${gTmp}`
 
       if [[ "${gStr}" =~ "bash" ]]; then

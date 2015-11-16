@@ -4,10 +4,13 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=1.1
+gVer=1.2
 gTITLE="Clover Build Command v${gVer}"
-gME="@cecekpawon | thrsh.net"
-gRepo="https://github.com/cecekpawon/OSXOLVED"
+gUname="cecekpawon"
+gME="@${gUname} | thrsh.net"
+gBase="OSXOLVED"
+gRepo="https://github.com/${gUname}/${gBase}"
+gRepoRAW="https://raw.githubusercontent.com/${gUname}/${gBase}/master"
 gScriptName=${0##*/}
 dHome="/Users/$(who am i | awk '{print $1}')"
 
@@ -210,7 +213,9 @@ build_pkg() {
 update_scripts() {
   log "Looking for updates"
 
-  gTmp=$(curl -sS "${gRepo}/versions.json" | awk '/'$gScriptName'/ {print $2}' | sed -e 's/[^0-9\.]//g')
+  gTmp=$(curl -sS "${gRepoRAW}/versions.json" | awk '/'$gScriptName'/ {print $2}' | sed -e 's/[^0-9\.]//g')
+  echo "${gTmp}"
+  exit
 
   if [[ $gTmp > $gVer ]]; then
     echo "Update currently available (v${gTmp}) .."
@@ -221,7 +226,7 @@ update_scripts() {
 
       echo "Create script backup: ${gBkp}"
 
-      curl -sS "${gRepo}/${gScriptName}" -o "${gTmp}"
+      curl -sS "${gRepoRAW}/${gScriptName}" -o "${gTmp}"
       gStr=`cat ${gTmp}`
 
       if [[ "${gStr}" =~ "bash" ]]; then

@@ -4,12 +4,15 @@
 # @cecekpawon 10/15/2015 00:13 AM
 # thrsh.net
 
-gVer=1.1
+gVer=1.2
 gID=$(id -u)
 gKext="${1}"
 gTITLE="Trad Kext Installer v${gVer}"
-gME="@cecekpawon | thrsh.net"
-gRepo="https://github.com/cecekpawon/OSXOLVED"
+gUname="cecekpawon"
+gME="@${gUname} | thrsh.net"
+gBase="OSXOLVED"
+gRepo="https://github.com/${gUname}/${gBase}"
+gRepoRAW="https://raw.githubusercontent.com/${gUname}/${gBase}/master"
 gScriptName=${0##*/}
 gUser="$(who am i | awk '{print $1}')"
 gDesktopDir="/Users/${gUser}/Desktop"
@@ -70,7 +73,7 @@ valid() {
 update() {
   echo "Looking for updates .."
 
-  gTmp=$(curl -sS "${gRepo}/versions.json" | awk '/'$gScriptName'/ {print $2}' | sed -e 's/[^0-9\.]//g')
+  gTmp=$(curl -sS "${gRepoRAW}/versions.json" | awk '/'$gScriptName'/ {print $2}' | sed -e 's/[^0-9\.]//g')
 
   if [[ $gTmp > $gVer ]]; then
     echo "Update currently available (v${gTmp}) .."
@@ -81,7 +84,7 @@ update() {
 
       echo "Create script backup: ${gBkp}"
 
-      curl -sS "${gRepo}/${gScriptName}" -o "${gTmp}"
+      curl -sS "${gRepoRAW}/${gScriptName}" -o "${gTmp}"
       gStr=`cat ${gTmp}`
 
       if [[ "${gStr}" =~ "bash" ]]; then

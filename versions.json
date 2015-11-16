@@ -1,11 +1,11 @@
 {
-  "yod-CloverUpd.sh": "1.1",
+  "yod-CloverUpd.sh": "1.2",
   "yod-GPUFramebuffers.php": "1.0",
   "yod-GenWebdriver.sh": "1.0",
   "yod-GetFakeSMC.sh": "1.0",
   "yod-HDAVerbsAnalyzer.php": "1.0",
-  "yod-MountEFI.sh": "1.1",
-  "yod-SIPcfg.php": "1.0",
+  "yod-MountEFI.sh": "1.2",
+  "yod-SIPcfg.php": "1.1",
   "yod-TradKextInstaller.sh": "1.1",
-  "yod-VerbsInColor.php": "1.0",
+  "yod-VerbsInColor.php": "1.0"
 }
