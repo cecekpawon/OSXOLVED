@@ -4,7 +4,7 @@
 # @cecekpawon 10/15/2015 00:13 AM
 # thrsh.net
 
-gVer=1.2
+gVer=1.3
 gID=$(id -u)
 gKext="${1}"
 gTITLE="Trad Kext Installer v${gVer}"
@@ -109,9 +109,9 @@ update() {
   fi
 
   printf "\n"
+  exit
 }
 
-gUpdate=0
 
 main() {
   printf "${gHEAD}"

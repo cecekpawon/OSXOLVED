@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=1.2
+gVer=1.3
 gTITLE="Clover Build Command v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
