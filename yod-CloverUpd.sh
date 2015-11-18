@@ -214,8 +214,6 @@ update_scripts() {
   log "Looking for updates"
 
   gTmp=$(curl -sS "${gRepoRAW}/versions.json" | awk '/'$gScriptName'/ {print $2}' | sed -e 's/[^0-9\.]//g')
-  echo "${gTmp}"
-  exit
 
   if [[ $gTmp > $gVer ]]; then
     echo "Update currently available (v${gTmp}) .."
