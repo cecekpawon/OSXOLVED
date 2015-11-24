@@ -5,7 +5,7 @@
 # @cecekpawon 09/30/2015 14:36 PM
 # thrsh.net
 
-$gVer="1.1";
+$gVer="1.2";
 $gTITLE="SIP Cfg v{$gVer}";
 $gUname="cecekpawon";
 $gME="@{$gUname} | thrsh.net";
@@ -17,9 +17,9 @@ passthru("clear");
 
 if (!isset($_SERVER["TERM_PROGRAM"])) die("Run in terminal!");
 
-$CSR_VALID_FLAGS = $BOOTFLAGSI = 0;
+$VALID_FLAGS = $BOOTFLAGSI = 0;
 $BIT = $DEBUG = $BRUTE = FALSE;
-$DBGCSRSTR = $DBGBBOOTERSTR = "";
+$DBGSTR = "";
 $BITS_ARR = array();
 $FLAGS = array(
     "CSR_ALLOW_UNTRUSTED_KEXTS"         => (1 << 0), // 1
@@ -32,19 +32,17 @@ $FLAGS = array(
     "CSR_ALLOW_DEVICE_CONFIGURATION"    => (1 << 7)  // 128
   );
 
-/*
-$BOOTFLAGS = array(
- Bitfields for boot_args->flags
-    "kBootArgsFlagRebootOnPanic"      => (1 << 0),
-    "kBootArgsFlagHiDPI"              => (1 << 1),
-    "kBootArgsFlagBlack"              => (1 << 2),
-    "kBootArgsFlagCSRActiveConfig"    => (1 << 3),
-    "kBootArgsFlagCSRPendingConfig"   => (1 << 4),
-    "kBootArgsFlagCSRBoot"            => (1 << 5),
-    "kBootArgsFlagBlackBg"            => (1 << 6),
-    "kBootArgsFlagLoginUI"            => (1 << 7)
+$BOOTERFLAGS = array(
+    "kBootArgsFlagRebootOnPanic"        => (1 << 0), // 1
+    "kBootArgsFlagHiDPI"                => (1 << 1), // 2
+    "kBootArgsFlagBlack"                => (1 << 2), // 4
+    "kBootArgsFlagCSRActiveConfig"      => (1 << 3), // 8
+    "kBootArgsFlagCSRPendingConfig"     => (1 << 4), // 16
+    "kBootArgsFlagCSRBoot"              => (1 << 5), // 32
+    "kBootArgsFlagBlackBg"              => (1 << 6), // 64
+    "kBootArgsFlagLoginUI"              => (1 << 7)  // 128
   );
-*/
+
 
 $gHEAD = <<<YODA
 \e[34m======================================================================
@@ -64,15 +62,21 @@ function help() {
   $help = <<<YODA
 Valid args:
 * DEBUG:
-  \e[34m{$FNAME} \e[31m--help\e[0m
-  \e[34m{$FNAME} \e[31m--update\e[0m
-  \e[34m{$FNAME} \e[31m--brute\e[0m
-  \e[34m{$FNAME} \e[31m--csrstatus\e[0m
+  \e[34m{$FNAME} \e[31m--help\e[0m (this texts)
+  \e[34m{$FNAME} \e[31m--update\e[0m (update scripts)
+  \e[34m{$FNAME} \e[31m--brute\e[0m (invoke all vars)
+  \e[34m{$FNAME} \e[31m--csrstatus\e[0m (sip status)
+  \e[34m{$FNAME} \e[31m--debug\e[0m (all flags)
+  \e[34m{$FNAME} \e[31m--booter\e[0m (use booter instead of csr flags)
 * BIT (hex):
   \e[34m{$FNAME} \e[31m11\e[0m
   \e[34m{$FNAME} \e[31m0x11\e[0m
 * FLAGS:
   \e[34m{$FNAME} \e[31m--{$FLAGS[0]} (try --brute: more flags)\e[0m
+* BOOTER FLAGS:
+  \e[34m{$FNAME} \e[31m2A --booter\e[0m
+  \e[34m{$FNAME} \e[31m--brute --booter\e[0m
+  \e[34m{$FNAME} \e[31m--booter --debug\e[0m
 
 YODA;
 
@@ -135,11 +139,11 @@ function update() {
 }
 
 function brute() {
-  global $CSR_VALID_FLAGS;
+  global $VALID_FLAGS;
 
   $i = -1; $b = $a = array();
 
-  while (++$i <= $CSR_VALID_FLAGS) {
+  while (++$i <= $VALID_FLAGS) {
     $s = print_flags($i, true);
     # Eleminate same values
     $md5 = md5(trim($s));
@@ -164,8 +168,18 @@ function print_header($s) {
 if (!isset($argv) || (count($argv) <= 1)) help();
 else {
   array_shift($argv);
+  $args = implode(" ", $argv);
+
   foreach ($argv as $arg) {
     $arg = trim(strtolower($arg));
+    if (preg_match("#(\-\-booter+)#i", $args)) {
+      $BOOTER = TRUE;
+      $FLAGS = $BOOTERFLAGS;
+    }
+    if (preg_match("#(\-\-debug+)#i", $args)) {
+      $DEBUG = TRUE;
+    }
+
     switch ($arg) {
       case '--help':
         help(); break 2;
@@ -178,9 +192,17 @@ else {
       default:
         if (preg_match("#^(0x)?([a-f0-9]{1,2})$#i", $arg)) {
           $BIT = $arg;
-        } elseif (preg_match("#(csr_allow+)#i", implode(" ", $argv))) {
+        } else {
+          if (preg_match("#(kBootArgsFlag+)#i", $args)) {
+            $BOOTER = TRUE;
+            $FLAGS = $BOOTERFLAGS;
+          } elseif (!preg_match("#(csr_allow+)#i", $args)) {
+            break;
+          }
+
           foreach ($argv as $val) {
-            $val = trim(strtoupper(preg_replace("#[^a-z_]#i", "", $val)));
+            $val = trim(preg_replace("#[^a-z_]#i", "", $val));
+            //$val = trim(strtoupper(preg_replace("#[^a-z_]#i", "", $val)));
             if (array_key_exists($val, $FLAGS)) {
               $BITS_ARR[] = $val;
             }
@@ -203,10 +225,10 @@ else {
 foreach ($FLAGS as $k => $v) {
   define($k, $v);
 
-  $CSR_VALID_FLAGS = $k ? $v : ($CSR_VALID_FLAGS | $v);
+  $VALID_FLAGS = $k ? $v : ($VALID_FLAGS | $v);
 
   if ($DEBUG || $BRUTE) {
-    $DBGCSRSTR .= sprintf("{$k}: \e[34m%d\e[0m | \e[34m0x%02x\e[0m\n", $v, $v);
+    $DBGSTR .= sprintf("{$k}: \e[34m%d\e[0m | \e[34m0x%02x\e[0m\n", $v, $v);
   }
 }
 
@@ -214,8 +236,9 @@ foreach ($FLAGS as $k => $v) {
 #print("{$DBGBBOOTERSTR}\n");
 
 if ($DEBUG || $BRUTE) {
-  print_header("CSR_VALID_FLAGS");
-  print("{$DBGCSRSTR}\n");
+  $dbg_header = ($BOOTER ? "BOOTER" : "CSR") . "_VALID_FLAGS";
+  print_header($dbg_header);
+  print("{$DBGSTR}\n");
 
   if ($BRUTE) brute();
   elseif(count($BITS_ARR)) {

@@ -17,11 +17,6 @@ passthru("clear");
 
 if (!isset($_SERVER["TERM_PROGRAM"])) die("Run in terminal!");
 
-/*
-  Inpiration: Apple Intel AMD/ATI Framebuffers by l0rd SJ_UnderWater
-  http://www.tonymacx86.com/graphics/112299-apple-intel-amd-ati-framebuffers.html
-*/
-
 $ctype = array(
     "02000000" => "LVDS",
     "04000000" => "DDVI",
@@ -46,7 +41,7 @@ $gHEAD = <<<YODA
 =========================================================================
 $gTITLE : $gME
 -------------------------------------------------------------------------
-Inpiration: Apple Intel AMD/ATI Framebuffers by l0rd SJ_UnderWater
+Inspiration: Apple Intel AMD/ATI Framebuffers by l0rd SJ_UnderWater
 =========================================================================\n\n
 YODA;
 
