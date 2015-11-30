@@ -17,8 +17,8 @@ passthru("clear");
 
 if (!isset($_SERVER["TERM_PROGRAM"])) die("Run in terminal!");
 
-$VALID_FLAGS = $BOOTFLAGSI = 0;
-$BIT = $DEBUG = $BRUTE = FALSE;
+$VALID_FLAGS = 0;
+$BIT = $DEBUG = $BRUTE = $BOOTER = FALSE;
 $DBGSTR = "";
 $BITS_ARR = array();
 $FLAGS = array(
@@ -106,6 +106,14 @@ function print_flags($i, $ret=false) {
   echo preg_replace("#!#", "", $s);
 }
 
+function csrstatus() {
+  die(passthru("clear && csrutil status"));
+}
+
+function print_header($s) {
+  return printf("\e[31m[x] %s\e[0m\n\n", $s);
+}
+
 function isJson($str) {
  $rtn = @json_decode($str, TRUE);
  return json_last_error() == JSON_ERROR_NONE ? $rtn : "";
@@ -157,14 +165,6 @@ function brute() {
   die(implode("", $b));
 }
 
-function csrstatus() {
-  die(passthru("clear && csrutil status"));
-}
-
-function print_header($s) {
-  return printf("\e[31m[x] %s\e[0m\n\n", $s);
-}
-
 if (!isset($argv) || (count($argv) <= 1)) help();
 else {
   array_shift($argv);
@@ -202,24 +202,22 @@ else {
 
           foreach ($argv as $val) {
             $val = trim(preg_replace("#[^a-z_]#i", "", $val));
-            //$val = trim(strtoupper(preg_replace("#[^a-z_]#i", "", $val)));
             if (array_key_exists($val, $FLAGS)) {
               $BITS_ARR[] = $val;
             }
           }
           if (count($BITS_ARR)) {
-            $DEBUG = TRUE;
-            break 2;
+            $DEBUG = TRUE; break 2;
           }
         }
     }
   }
 
   if (
-      ($DEBUG === FALSE) &&
-      ($BIT === FALSE) &&
-      ($BRUTE === FALSE)
-    ) help();
+    ($DEBUG === FALSE) &&
+    ($BIT === FALSE) &&
+    ($BRUTE === FALSE)
+  ) help();
 }
 
 foreach ($FLAGS as $k => $v) {
@@ -231,9 +229,6 @@ foreach ($FLAGS as $k => $v) {
     $DBGSTR .= sprintf("{$k}: \e[34m%d\e[0m | \e[34m0x%02x\e[0m\n", $v, $v);
   }
 }
-
-#print_header("BOOTER CFG");
-#print("{$DBGBBOOTERSTR}\n");
 
 if ($DEBUG || $BRUTE) {
   $dbg_header = ($BOOTER ? "BOOTER" : "CSR") . "_VALID_FLAGS";

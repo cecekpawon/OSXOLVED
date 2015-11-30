@@ -5,7 +5,7 @@
 # @cecekpawon 10/20/2015 00:26 AM
 # thrsh.net
 
-$gVer="1.1";
+$gVer="1.2";
 $gTITLE="GPUFramebuffers v{$gVer}";
 $gUname="cecekpawon";
 $gME="@{$gUname} | thrsh.net";
@@ -132,7 +132,7 @@ function getbin($fb) {
         $r = "[0-3]{4}[a-f0-9]{2}19[0-3]{8}00000004[a-f0-9]{176}";
         break;
       default:
-        break;
+        return;
     }
 
     return preg_match_all(sprintf("#(%s+)#i", $r), $a, $c) ? $c[1] : "";
@@ -152,16 +152,20 @@ else {
       update();
       break;
     default:
-      if (!($c = getbin($arg))) help();
+      $fb = $arg;
+      if (!($c = getbin($fb))) help();
       break;
   }
 }
 
 $r = array();
 
+//$ctt = implode(array_keys($ctype), "|");
+
 foreach ($c as $k => $v) {
   switch ($fb) {
     case "azul":
+      //$va = preg_replace("#^(.*3000000001+)#", "01", $v);
     case "skylake":
       $v = substr_replace($v, "", 96 , 8);
       break;
@@ -175,20 +179,22 @@ foreach ($c as $k => $v) {
   $PlatformID="";
 
   foreach ($d as $i => $l) {
+    if (strlen($l) < 24) continue;
+
     $x = array();
 
     switch ($i) {
       case 0:
         $s = substr($v,  0, 8); $x[] = "Platform-ID: " . $s; $t[] = sprintf("ig-platform-id: %s\n",  flip($s));
         $s = substr($v, 10, 2); $x[] = "Port: " . $s;
-        $s = substr($v, 12, 2); $x[] = "Pipes: " . $s;
+        //$s = substr($v, 12, 2); $x[] = "Pipes: " . $s;
         $s = substr($v, 14, 2); $x[] = "*FBMem: " . $s;
         $s = substr($v, 16, 8); $x[] = "StolenMemSize: " . $s . toExt($s,  1);
         break;
       case 1:
         if ($fb !== "snb") {
           $s = substr($l, 0, 8); $x[] = "FBMemSize: " . $s . toExt($s,  1);
-          $s = substr($l, 8, 8); $x[] = "Vram: " . $s . toExt($s,  1);
+          //$s = substr($l, 8, 8); $x[] = "Vram: " . $s . toExt($s,  1);
           //$s = substr($l, 16, 8); $x[] = "BacklightFreq: " . $s . toExt($s);
           break;
         }
@@ -225,6 +231,5 @@ foreach ($c as $k => $v) {
 
   $r[] = implode("\n",$t);
 }
-
 
 if (count($r)) die(implode("\n\n------------------------\n\n", $r) . "\n");
