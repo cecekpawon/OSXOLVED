@@ -4,7 +4,7 @@
 # @cecekpawon 10/15/2015 00:13 AM
 # thrsh.net
 
-gVer=1.3
+gVer=1.4
 gID=$(id -u)
 gKext="${1}"
 gTITLE="Trad Kext Installer v${gVer}"
@@ -121,8 +121,8 @@ main() {
 
   if [[ "$#" -lt 1 ]]; then
     printf "Drag <kext> here & ENTER: "
-    read gVar
-    gArgs=("${gVar}")
+    read -ea gArgs
+    #gArgs=("${gVar}")
   fi
 
   for arg in "${gArgs[@]}"
