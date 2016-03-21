@@ -27,6 +27,7 @@ gGCCVer="4.9"
 
 dEdk2Patch="${dClover}/Patches_for_EDK2"
 dCloverPkg="${dClover}/CloverPackage"
+dCloverPkgBin="${dCloverPkg}/sym"
 dCloverBoot="${dCloverPkg}/CloverV2/EFI/BOOT"
 dClover64="${dEdk2}/Build/Clover/RELEASE_GCC49/X64"
 
@@ -208,6 +209,7 @@ build_pkg() {
   log "Build PKG Installer"
 
   [[ -ef "${dCloverPkg}/makepkg" ]] && "${dCloverPkg}"/makepkg
+  if ls "${dCloverPkgBin}/"Clover*.pkg &>/dev/null; then open "${dCloverPkgBin}"; fi
 }
 
 update_scripts() {
