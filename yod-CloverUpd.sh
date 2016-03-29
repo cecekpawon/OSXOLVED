@@ -101,7 +101,7 @@ boot() {
   vCloverCurrent=$(LC_ALL=C ioreg -l -pIODeviceTree | \
     sed -nE 's@.*boot-log.*<([0-9a-fA-F]*)>.*@\1@p' | \
     xxd -r -p                                       | \
-    grep -Esio 'cloverx\srev.([0-9]+)'              | \
+    grep -Esio 'clover\srev.([0-9]+)'              | \
     awk '{print $3}')
     #sed -nE 's/^.*revision: *([0-9]+).*$/\1/p')
 
