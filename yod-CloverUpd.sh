@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=1.4
+gVer=1.5
 gTITLE="Clover Build Command v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -98,12 +98,20 @@ boot() {
   vCloverSVN=$(svn info $uClover | grep Revision: | cut -c11-)
 
   #CloverUpdaterUtility
-  vCloverCurrent=$(LC_ALL=C ioreg -l -pIODeviceTree  | \
-    sed -nE 's@.*boot-log.*<([0-9a-fA-F]*)>.*@\1@p'  | \
-    xxd -r -p                                        | \
-    sed -nE 's/^.*revision: *([0-9]+).*$/\1/p')
+  vCloverCurrent=$(LC_ALL=C ioreg -l -pIODeviceTree | \
+    sed -nE 's@.*boot-log.*<([0-9a-fA-F]*)>.*@\1@p' | \
+    xxd -r -p                                       | \
+    grep -Esio 'cloverx\srev.([0-9]+)'              | \
+    awk '{print $3}')
+    #sed -nE 's/^.*revision: *([0-9]+).*$/\1/p')
 
-  C_HI=$((($vCloverSVN > $vCloverCurrent)) && echo $C_RED || echo $C_MENU)
+  C_HI=$C_RED
+
+  if [[ ! $vCloverCurrent =~ ^[0-9]+$ ]]; then
+    vCloverCurrent="Undetected"
+  elif [[ $vCloverSVN -le $vCloverCurrent ]]; then
+    C_HI=$C_MENU
+  fi
 }
 
 compile_gcc() {
