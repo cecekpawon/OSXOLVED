@@ -5,13 +5,17 @@
 # @cecekpawon 10/20/2015 00:26 AM
 # thrsh.net
 
-$gVer="1.2";
-$gTITLE="GPUFramebuffers v{$gVer}";
-$gUname="cecekpawon";
-$gME="@{$gUname} | thrsh.net";
-$gBase="OSXOLVED";
-$gRepo="https://github.com/{$gUname}/{$gBase}";
-$gRepoRAW="https://raw.githubusercontent.com/{$gUname}/{$gBase}/master";
+$gVer = "1.3";
+$gTITLE = "GPUFramebuffers v{$gVer}";
+$gUname = "cecekpawon";
+$gME = "@{$gUname} | thrsh.net";
+$gBase = "OSXOLVED";
+$gRepo = "https://github.com/{$gUname}/{$gBase}";
+$gRepoRAW = "https://raw.githubusercontent.com/{$gUname}/{$gBase}/master";
+
+$gFBNewVer = "10.11.4";
+$gOSVer = passVar("sw_vers -productVersion");
+$gFBNew = (version_compare($gOSVer, $gFBNewVer) >= 0);
 
 passthru("clear");
 
@@ -48,7 +52,7 @@ YODA;
 echo $gHEAD;
 
 function dump($value) {
-  echo "<xmp>";
+  //echo "<xmp>";
   die(var_dump($value));
 }
 
@@ -70,6 +74,12 @@ Other:
 YODA;
 
   die($help);
+}
+
+function passVar($str) {
+  ob_start();
+  passthru($str);
+  return trim(ob_get_clean());
 }
 
 function isJson($str) {
@@ -129,7 +139,8 @@ function getbin($fb) {
         $r = "0[0-8]{1}00[0-2]{1}[26e]{1}0[4acd]{1}0[0-9]{14}[24]{1}[a-f0-9]{192}";
         break;
       case "skylake":
-        $r = "[0-3]{4}[a-f0-9]{2}19[0-3]{8}00000004[a-f0-9]{176}";
+        //$r = "[0-3]{4}[a-f0-9]{2}19[0-3]{8}00000004[a-f0-9]{176}";
+        $r = "[0-3]{4}[a-f0-9]{2}19[0-3]{8}([0-9]{24})?00000004[a-f0-9]{176}"; //10.11.4
         break;
       default:
         return;
@@ -160,14 +171,14 @@ else {
 
 $r = array();
 
-//$ctt = implode(array_keys($ctype), "|");
-
 foreach ($c as $k => $v) {
   switch ($fb) {
     case "azul":
-      //$va = preg_replace("#^(.*3000000001+)#", "01", $v);
+      if ($gFBNew) $v = substr_replace($v, "", 96 , 8);//10.11.4
+      break;
     case "skylake":
-      $v = substr_replace($v, "", 96 , 8);
+      if ($gFBNew) $v = substr_replace($v, "", 15 , 24);//10.11.4
+      $v = substr_replace($v, "", 96 , $gFBNew ? 16 : 8);
       break;
     default:
       break;
