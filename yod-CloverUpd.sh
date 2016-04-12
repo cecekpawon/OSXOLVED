@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=1.5
+gVer=1.6
 gTITLE="Clover Build Command v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -31,18 +31,23 @@ dCloverPkgBin="${dCloverPkg}/sym"
 dCloverBoot="${dCloverPkg}/CloverV2/EFI/BOOT"
 dClover64="${dEdk2}/Build/Clover/RELEASE_GCC49/X64"
 
+gCloverRev="${dCloverPkg}/revision"
+
 uEdk2="svn://svn.code.sf.net/p/edk2/code/trunk/edk2"
+uEdk2="svn://svn.code.sf.net/p/edk2/code/branches/UDK2015"
 uClover="svn://svn.code.sf.net/p/cloverefiboot/code"
 uCloverCommits="${uClover}/commit_browser"
 
 vCloverSVN=""
-vCloverCurrent=""
+vCloverSrc=""
+vCloverBoot=""
 
 C_NORMAL="\e[0m"
 C_MENU="\e[36m"
 C_NUM="\e[33m"
 C_RED="\e[31m"
 C_BLUE="\e[38;5;27m"
+C_PURPLE="\e[35m"
 C_BOLD="\e[1m"
 C_HI=""
 
@@ -54,7 +59,7 @@ menu() {
 ${C_MENU}====================================================
 ${C_BLUE}${gTITLE} ${C_MENU}: ${C_RED}${gME}
 ${C_MENU}====================================================
-Revision SVN: ${C_HI}${vCloverSVN} ${C_MENU}| Current: ${vCloverCurrent}
+Revision SVN: ${C_HI}${vCloverSVN} ${C_MENU}| Src: ${vCloverSrc} ${C_MENU}| Boot: ${vCloverBoot}
 ${C_MENU}----------------------------------------------------
 \t\t\t ${C_NUM}[0] ${C_MENU}Compile GCC
 \t\t\t ${C_NUM}[1] ${C_MENU}Revert SVN
@@ -97,27 +102,35 @@ boot() {
 
   vCloverSVN=$(svn info $uClover | grep Revision: | cut -c11-)
 
+  C_HI=$C_MENU
+
+  if [[ -f "${gCloverRev}" ]]; then
+    vCloverSrc=$(cat "${gCloverRev}")
+  fi
+
+  if [[ ! $vCloverSrc =~ ^[0-9]+$ ]]; then
+    vCloverSrc="${C_PURPLE}Undetected"
+  elif [[ $vCloverSVN -gt $vCloverSrc ]]; then
+    C_HI=$C_RED
+  fi
+
   #CloverUpdaterUtility
-  vCloverCurrent=$(LC_ALL=C ioreg -l -pIODeviceTree | \
+  vCloverBoot=$(LC_ALL=C ioreg -l -pIODeviceTree | \
     sed -nE 's@.*boot-log.*<([0-9a-fA-F]*)>.*@\1@p' | \
     xxd -r -p                                       | \
     grep -Esio 'clover\srev.([0-9]+)'              | \
     awk '{print $3}')
     #sed -nE 's/^.*revision: *([0-9]+).*$/\1/p')
 
-  C_HI=$C_RED
-
-  if [[ ! $vCloverCurrent =~ ^[0-9]+$ ]]; then
-    vCloverCurrent="Undetected"
-  elif [[ $vCloverSVN -le $vCloverCurrent ]]; then
-    C_HI=$C_MENU
+  if [[ ! $vCloverBoot =~ ^[0-9]+$ ]]; then
+    vCloverBoot="${C_PURPLE}Undetected"
   fi
 }
 
 compile_gcc() {
   log "Compiling GCC (Need Commandlinetools xCode)"
 
-  if [[ -d "${dClover}" && -ef "${dClover}/buildgcc-${gGCCVer}.sh" ]]; then
+  if [[ -d "${dClover}" && -f "${dClover}/buildgcc-${gGCCVer}.sh" ]]; then
     run_fix && make -C BaseTools/Source/C
     cd "${dClover}" && ./buildgcc-$gGCCVer.sh && ./buildnasm.sh && ./buildgettext.sh
   else
@@ -139,7 +152,7 @@ update_edk2() {
 }
 
 update_clover() {
-  if [[ -ef "${dEdk2}/edksetup.sh" ]]; then
+  if [[ -f "${dEdk2}/edksetup.sh" ]]; then
     log "Updating Clover"
 
     svn checkout "${uClover}" "${dClover}"
@@ -185,7 +198,7 @@ EOF`") " sSvn
 compile_clover() {
   log "Compiling Clover"
 
-  if [[ -ef "${dClover}/ebuild.sh" ]]; then
+  if [[ -f "${dClover}/ebuild.sh" ]]; then
     run_fix
     "${dClover}"/ebuild.sh -x64
   else
@@ -201,9 +214,9 @@ copy_binary() {
 
   for drv in "${gCloverDrivers[@]}"
   do
-    [[ -ef "${dClover64}/$drv.efi" ]] && cp "${dClover64}/$drv.efi" "${dDesktop}/$drv-64.efi"
+    [[ -f "${dClover64}/$drv.efi" ]] && cp "${dClover64}/$drv.efi" "${dDesktop}/$drv-64.efi"
   done
-  [[ -ef "${dDesktop}/CLOVERX64-64.efi" ]] && mv "${dDesktop}/CLOVERX64-64.efi" "${dDesktop}/BOOTX64.efi"
+  [[ -f "${dDesktop}/CLOVERX64-64.efi" ]] && mv "${dDesktop}/CLOVERX64-64.efi" "${dDesktop}/BOOTX64.efi"
 }
 
 open_build_dir() {
@@ -216,8 +229,8 @@ open_build_dir() {
 build_pkg() {
   log "Build PKG Installer"
 
-  [[ -ef "${dCloverPkg}/makepkg" ]] && "${dCloverPkg}"/makepkg
-  if ls "${dCloverPkgBin}/"Clover*.pkg &>/dev/null; then open "${dCloverPkgBin}"; fi
+  [[ -f "${dCloverPkg}/makepkg" ]] && "${dCloverPkg}"/makepkg
+  ls "${dCloverPkgBin}/"Clover*.pkg &>/dev/null && open "${dCloverPkgBin}"
 }
 
 update_scripts() {
