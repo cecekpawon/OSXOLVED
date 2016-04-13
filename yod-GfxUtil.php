@@ -92,13 +92,15 @@ device - 0x1c
 
 */
 
-$gVer = "1.0";
+$gVer = "1.1";
 $gTITLE = "PHP gfxutil v{$gVer}";
 $gUname = "cecekpawon";
 $gME = "@{$gUname} | thrsh.net";
 $gBase = "OSXOLVED";
 $gRepo = "https://github.com/{$gUname}/{$gBase}";
 $gRepoRAW = "https://raw.githubusercontent.com/{$gUname}/{$gBase}/master";
+
+header("Content-Type", "text/html; charset=utf-8");
 
 passthru("clear");
 
@@ -164,39 +166,60 @@ function update() {
 
 // CONST
 $hexfile = "dump.hex";
+$xmlfile = "dump.xml";
 
+// DATA_TYPES
 const DATA_INT8 = 1;
 const DATA_INT16  = 2;
 const DATA_INT32  = 3;
 const DATA_BINARY = 4;
 const DATA_STRING = 5;
 
+// FILE_TYPES
+const FILE_BIN = 1;
+const FILE_HEX = 2;
+const FILE_XML = 3;
+
 // Dummy settings, later to args
 $settings = new stdClass;
 $settings->detect_numbers = TRUE;
 $settings->detect_strings = TRUE;
 $settings->verbose = TRUE;
+$settings->ifile_type = FILE_XML;
+
+
+if ($settings->ifile_type === FILE_XML) {
+  $imp = new DOMImplementation();
+  $doctype = $imp->createDocumentType("plist", "-//Apple//DTD PLIST 1.0//EN", "http://www.apple.com/DTDs/PropertyList-1.0.dtd");
+  $devprop_plist = $imp->createDocument("", "", $doctype);
+  $devprop_plist->formatOutput = true;
+  $devprop_plist->version = "1.0";
+  $devprop_plist->encoding = "UTF-8";
+}
 
 function readbin($bp, &$size, &$index, $len, &$ret) {
   $ret="";
   if ($size) {
     $s = $index;
-    //$len = hexdec($len);
-    //if ($len <= $size) {
+    if ($len <= $size) {
         $nlen = $s + $len;
         for ($i=$s; $i < $nlen; $i++) {
           $ret .= $bp[$i];
           $index++;
         }
         $size -= $len;
-        //return 1;
-    //}
+        return 1;
+    }
   }
   // error: read_binary: invalid binary data
 }
 
 function is_vchar($s) {
   return preg_match('/^[\w\s\p{P}]+$/', hex2bin($s));
+}
+
+function is_ascii($s) {
+  return (bool) !preg_match( '/[\x80-\xFF]/' , $s);
 }
 
 function nopadd($s) {
@@ -223,18 +246,49 @@ function readint($bp, $index, $len) {
   return hexdec(flip(readbytes($bp, $index, $len)));
 }
 
+function uni2str($d, $length, &$str, &$len) {
+  $x = str_split($d, 2);
+  $length = (count($x) + 1);
+  if($length != 0) {
+    $len = 0;
+    $str = array();
+    while ($length--) {
+      $unich = $x[$len++];
+      if($unich < 0x80) {
+        $str[$len++] = $unich;
+      } else if ($unich < (1 << 11)) {
+        $str[$len++] = ord(0xC0 | ($unich >> 6));
+        $str[$len++] = ord(0x80 | ($unich & 0x3F));
+      } else {
+        $str[$len++] = ord(0xE0 | ($unich >> 12));
+        $str[$len++] = ord(0x80 | (($unich >> 6) & 0x3F));
+        $str[$len++] = ord(0x80 | ($unich & 0x3F));
+      }
+    }
+
+    //if ($length < 0) $str[$len] = '00';
+    $str = implode("", $str);
+    return 1;
+  }
+
+  //fprintf(stderr, "unicode2str: invalid binary unicode data\n");
+  return 0;
+}
+
 $gfx = new stdClass;
 
 $gfx->blocks = array();
 
-$dump = dirname(__FILE__) . "/{$hexfile}";
-if (file_exists($dump)) {
-  $dump = file_get_contents(dirname(__FILE__) . "/{$hexfile}");
+$dump_hex = dirname(__FILE__) . "/{$hexfile}";
+$dump_xml = dirname(__FILE__) . "/{$xmlfile}";
+
+if (file_exists($dump_hex)) {
+  $dump_hex = file_get_contents(dirname(__FILE__) . "/{$hexfile}");
 } else {
-  $dump = passVar("ioreg -lw0 -p IODeviceTree -n efi -r -x | grep device-properties | sed 's/.*<//;s/>.*//;'");
+  $dump_hex = passVar("ioreg -lw0 -p IODeviceTree -n efi -r -x | grep device-properties | sed 's/.*<//;s/>.*//;'");
 }
 
-$bp = explode("|", chunk_split($dump, 2, "|"));
+$bp = explode("|", chunk_split($dump_hex, 2, "|"));
 
 //define("MAX_DEVICE_PATH_LEN", count($bp)); //-1?
 
@@ -277,6 +331,7 @@ for ($i=0; $i < $gfx_header->countofblocks; $i++) {
 
   readbin($bp, $size, $index, $gfx_blockheader->devpath_len, $gfx_blockheader->devpath);
 
+  // -[ MAGIC ]- devpath
   preg_match("/[a-f0-9]{16}([0-9]{8})(.+)[7f]fff0400/i", $gfx_blockheader->devpath, $matches);
   //print_r($matches);
 
@@ -314,10 +369,15 @@ for ($i=0; $i < $gfx_header->countofblocks; $i++) {
   $gfx->blocks[$i] = $gfx_blockheader;
 
   for($y=1; $y <= $gfx_blockheader->records; $y++) {
-    $length = hexdec($bp[$index]);
+    $length = readint($bp, $index, 4);
     $length -= 4; $index += 4; $size -= 4;
-    readbin($bp, $size, $index, $length, $key);
-    $key = hex2bin($key);
+    readbin($bp, $size, $index, $length, $bin);
+
+    $key = hex2bin($bin);
+
+    if (uni2str($bin, $length, $str, $str_len)) {
+      $key = hex2bin($str);
+    }
 
     $length = readint($bp, $index, 4);
     $length -= 4; $index += 4; $size -=4;
@@ -325,16 +385,15 @@ for ($i=0; $i < $gfx_header->countofblocks; $i++) {
 
     //read entries
     $gfx_entry = new stdClass;
-    //$gfx_entry->bkey = $bin;
-    //$gfx_entry->bkey_len = $length;
+    $gfx_entry->bkey = $bin;
+    $gfx_entry->bkey_len = $length;
     $gfx_entry->key = $key;
-    $gfx_entry->key_len = strlen($key);
+    $gfx_entry->key_len = $str_len;
     $gfx_entry->val_type = DATA_BINARY; // set default data type
     $gfx_entry->val = $val;
     $gfx_entry->val_len = $length;
 
     if ($settings->detect_numbers) { // detect numbers
-      //if (is_numeric($val)) {
       if (ishex($val)) {
         switch ($length) {
           case 1: // int8 sizeof(0xFF)
@@ -362,6 +421,7 @@ for ($i=0; $i < $gfx_header->countofblocks; $i++) {
       && ($gfx_entry->val_type === DATA_BINARY)
       && is_vchar($val)
       /*
+      && is_ascii($val)
       && !is_numeric($val)
       && !ishex($val)
       && is_string($val)
@@ -394,60 +454,109 @@ HTML;
 }
 
 function print_gfx($gfx) {
-  $bit = 0;
+  global $settings, $devprop_plist, $dump_xml;
 
-  $count = $gfx->gfx_header->countofblocks;
-  $bit = $count ? 1 : 0;
+  if ($settings->verbose) {
+    $bit = 0;
+    $count = $gfx->gfx_header->countofblocks;
+    $bit = $count ? 1 : 0;
+    printf("o device-properties <size=%d, children=%d>\n", $gfx->gfx_header->filesize, $count);
+  }
 
-  printf("o device-properties <size=%d, children=%d>\n", $gfx->gfx_header->filesize, $count);
+  if ($settings->ifile_type === FILE_XML) {
+    $dict = $devprop_plist->createElement("dict");
+  }
 
   foreach ($gfx->blocks as $gfx_blockheader_tmp) {
-    indent(false, 0, $bit);
-    printf("\n");
-
-    $bit = ($count-1) ? 1 : 0;
-
-    indent(true, 0, $bit);
     //$devpath_text = ConvertDevicePathToText($gfx_blockheader_tmp->devpath, 1, 1);
     //if($devpath_text  != NULL) printf("%s <size=%d, records=%d>\n",($devpath_text != NULL)?$devpath_text:"???", $gfx_blockheader_tmp->blocksize, $gfx_blockheader_tmp->records);
-    printf("%s <size=%d, records=%d>\n", $gfx_blockheader_tmp->devpathstr_pci ? $gfx_blockheader_tmp->devpathstr_pci : "???", $gfx_blockheader_tmp->blocksize, $gfx_blockheader_tmp->records);
+    $tmp = $gfx_blockheader_tmp->devpathstr_pci ? $gfx_blockheader_tmp->devpathstr_pci : "???";
 
-    indent(false, 0, $bit);
-    printf("{\n");
+    if ($settings->verbose) {
+      indent(false, 0, $bit);
+      printf("\n");
+
+      $bit = ($count-1) ? 1 : 0;
+
+      indent(true, 0, $bit);
+      printf("%s <size=%d, records=%d>\n", $tmp, $gfx_blockheader_tmp->blocksize, $gfx_blockheader_tmp->records);
+
+      indent(false, 0, $bit);
+      printf("{\n");
+    }
+
+    if ($settings->ifile_type === FILE_XML) {
+      $tmp = $devprop_plist->createElement("key", $tmp);
+      $dict->appendChild($tmp);
+      $dict2 = $devprop_plist->createElement("dict");
+    }
 
     foreach ($gfx_blockheader_tmp->entries as $gfx_entry_tmp) {
-      indent(false, 1, $bit);
+      if ($settings->verbose) {
+        indent(false, 1, $bit);
+      }
 
       $key = $gfx_entry_tmp->key;
       $val = $gfx_entry_tmp->val;
+      $b1 = $b2 = "";
 
       switch ($gfx_entry_tmp->val_type) {
+        case DATA_INT8:
+        case DATA_INT16:
+        case DATA_INT32:
+          $val = flip($val);
+          $val = sprintf("0x%0" . $gfx_entry_tmp->val_type . "s", $val);
+        break;
         case DATA_STRING:
           $val = hex2bin($val);
-          printf("\"%s\"='%s'\n", $key, $val);
-        break;
-        case DATA_INT8:
-          printf("\"%s\"=0x%02s\n", $key, flip($val));
-        break;
-        case DATA_INT16:
-          printf("\"%s\"=0x%04s\n", $key, flip($val));
-        break;
-        case DATA_INT32:
-          printf("\"%s\"=0x%08s\n", $key, flip($val));
+          $b1 = $b2 = "'";
         break;
         default:
         case DATA_BINARY:
-          printf("\"%s\"=<%s>\n", $key, $val);
+          $b1 = "<"; $b2 = ">";
         break;
+      }
+
+      if ($settings->verbose) {
+        printf("\"%s\"=$b1%s$b2\n", $key, $val);
+      }
+
+      if ($settings->ifile_type === FILE_XML) {
+        $tmp = "string";
+        if ($gfx_entry_tmp->val_type === DATA_BINARY) {
+          $tmp = "data";
+          $val =  base64_encode($val);
+        }
+        $k = $devprop_plist->createElement("key", $key);
+        $v = $devprop_plist->createElement($tmp, $val);
+        $dict2->appendChild($k);
+        $dict2->appendChild($v);
       }
     }
 
-    indent(false, 0, $bit);
-    printf("}\n");
+    if ($settings->verbose) {
+      indent(false, 0, $bit);
+      printf("}\n");
+    }
+
+    if ($settings->ifile_type === FILE_XML) {
+      $dict->appendChild($dict2);
+    }
+  }
+
+  if ($settings->ifile_type === FILE_XML) {
+    $plist = $devprop_plist->createElement("plist");
+    $plist->setAttribute("version", "1.0");
+    $plist->appendChild($dict);
+    $devprop_plist->appendChild($plist);
+    if ($settings->verbose) {
+      printf("\n\n%s\n\n", $devprop_plist->saveXML());
+    }
+    $devprop_plist->save($dump_xml);
   }
 
   return;
 }
 
-if ($settings->verbose) print_gfx($gfx);
+if ($settings->verbose || $settings->ifile_type) print_gfx($gfx);
 else dump($gfx);
