@@ -165,7 +165,7 @@ function update() {
       die("Update failed :((\n");
     }
   } else {
-    die("Scripts up-to-date! :))\n");
+    printf("Scripts up-to-date! :))\n");
   }
 }
 
