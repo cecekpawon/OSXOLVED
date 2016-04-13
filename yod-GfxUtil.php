@@ -137,6 +137,11 @@ function passVar($str) {
   return trim(ob_get_clean());
 }
 
+function isJson($str) {
+ $rtn = @json_decode($str, TRUE);
+ return json_last_error() == JSON_ERROR_NONE ? $rtn : "";
+}
+
 function update() {
   global $gVer, $gRepoRAW;
 
@@ -187,6 +192,7 @@ $settings->detect_strings = TRUE;
 $settings->verbose = TRUE;
 $settings->ifile_type = FILE_XML;
 
+$settings->update = TRUE;
 
 if ($settings->ifile_type === FILE_XML) {
   $imp = new DOMImplementation();
@@ -557,6 +563,8 @@ function print_gfx($gfx) {
 
   return;
 }
+
+if ($settings->update) update();
 
 if ($settings->verbose || $settings->ifile_type) print_gfx($gfx);
 else dump($gfx);
