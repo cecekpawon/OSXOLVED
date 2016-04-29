@@ -43,3 +43,7 @@ __for educational purpose only__
 #### GfxUtil
 
 > PHP port of legendary mcmatrix gfxutil
+
+#### IoreXtripper
+
+> Strip your .ioreg ultra sensitive datas
