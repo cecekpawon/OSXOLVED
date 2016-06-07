@@ -21,7 +21,16 @@ dDesktop="${dHome}/Desktop"
 dEdk2="${dSrc}/edk2"
 dClover="${dEdk2}/Clover"
 gCloverDrivers=("CLOVERX64" "FSInject" "OsxAptioFixDrv" "OsxFatBinaryDrv")
+#gCloverDrivers=("CLOVERX64")
 gGCCVer="4.9"
+
+#gToolchain="GCC49"
+#gToolchain="XCODE5"
+#gToolchain="LLVM"
+gToolchain="XCLANG"
+gArch="X64"
+
+export CONF_PATH="${dClover}/Conf"
 
 ## END: user define --//
 
@@ -29,12 +38,10 @@ dEdk2Patch="${dClover}/Patches_for_EDK2"
 dCloverPkg="${dClover}/CloverPackage"
 dCloverPkgBin="${dCloverPkg}/sym"
 dCloverBoot="${dCloverPkg}/CloverV2/EFI/BOOT"
-dClover64="${dEdk2}/Build/Clover/RELEASE_GCC49/X64"
+dClover64="${dEdk2}/Build/Clover/RELEASE_${gToolchain}/${gArch}"
 
-gCloverRev="${dCloverPkg}/revision"
-
+#uEdk2="svn://svn.code.sf.net/p/edk2/code/branches/UDK2015"
 uEdk2="svn://svn.code.sf.net/p/edk2/code/trunk/edk2"
-uEdk2="svn://svn.code.sf.net/p/edk2/code/branches/UDK2015"
 uClover="svn://svn.code.sf.net/p/cloverefiboot/code"
 uCloverCommits="${uClover}/commit_browser"
 
@@ -50,7 +57,6 @@ C_BLUE="\e[38;5;27m"
 C_PURPLE="\e[35m"
 C_BOLD="\e[1m"
 C_HI=""
-
 
 menu() {
   tabs -2
@@ -100,16 +106,17 @@ go() {
 boot() {
   log "Initializing"
 
-  vCloverSVN=$(svn info $uClover | grep Revision: | cut -c11-)
+  vCloverSVN=$(svn info $uClover | grep Revision | cut -c11-)
 
   C_HI=$C_MENU
 
-  if [[ -f "${gCloverRev}" ]]; then
-    vCloverSrc=$(cat "${gCloverRev}")
+  if [[ -d "${dClover}" && -d "${dClover}/.svn" ]]; then
+    vCloverSrc=$(svn info ${dClover} | grep Revision | cut -c11-)
   fi
 
   if [[ ! $vCloverSrc =~ ^[0-9]+$ ]]; then
     vCloverSrc="${C_PURPLE}Undetected"
+    C_HI=$C_RED
   elif [[ $vCloverSVN -gt $vCloverSrc ]]; then
     C_HI=$C_RED
   fi
@@ -124,6 +131,9 @@ boot() {
 
   if [[ ! $vCloverBoot =~ ^[0-9]+$ ]]; then
     vCloverBoot="${C_PURPLE}Undetected"
+    C_HI=$C_RED
+  elif [[ $vCloverSVN -gt $vCloverBoot ]]; then
+    C_HI=$C_RED
   fi
 }
 
@@ -131,8 +141,9 @@ compile_gcc() {
   log "Compiling GCC (Need Commandlinetools xCode)"
 
   if [[ -d "${dClover}" && -f "${dClover}/buildgcc-${gGCCVer}.sh" ]]; then
-    run_fix && make -C BaseTools/Source/C
-    cd "${dClover}" && ./buildgcc-$gGCCVer.sh && ./buildnasm.sh && ./buildgettext.sh
+    run_fix && sudo make -C BaseTools/Source/C
+    cd "${dClover}" && sudo ./buildgcc-$gGCCVer.sh && sudo ./buildnasm.sh && sudo ./buildgettext.sh
+    sudo -k
   else
     log "No EDK2 / Clover sources. Start cloning"
     update_clover
@@ -155,7 +166,7 @@ update_clover() {
   if [[ -f "${dEdk2}/edksetup.sh" ]]; then
     log "Updating Clover"
 
-    svn checkout "${uClover}" "${dClover}"
+    svn co "${uClover}" "${dClover}"
     run_fix
   else
     log "No EDK2 sources. Start cloning"
@@ -200,7 +211,7 @@ compile_clover() {
 
   if [[ -f "${dClover}/ebuild.sh" ]]; then
     run_fix
-    "${dClover}"/ebuild.sh -x64
+    "${dClover}"/ebuild.sh -a ${gArch} -t ${gToolchain}
   else
     log "No Clover sources. Start cloning"
 
