@@ -1,10 +1,10 @@
 #!/usr/bin/php
 <?php
-# SerialKiller
+# IoreXtripper
 # @cecekpawon 04/29/2016 20:17 PM
 # thrsh.net
 
-$gVer = "1.0";
+$gVer = "1.1";
 $gTITLE = "IoreXtripper v{$gVer}";
 $gUname = "cecekpawon";
 $gME = "@{$gUname} | thrsh.net";
@@ -125,20 +125,25 @@ function parse_args() {
   if (empty($output)) usage("Output: cannot be empty");
 }
 
-
 $a = array(
-  "IOPlatformSerialNumber" => "(>IOPlatformSerialNumber<.*?string>+)([^<]+)",
-  "SerialNumber" => "(>serial\-number<.*?data>.*?)([a-z0-9\+\/\=]+)(.*?<\/data>+)",
+  array("String", "IOPlatformSerialNumber"),
+  array("Data", "serial-number"),
+  array("String", "processor-memory-board-serial-number"),
+  array("Data", "SystemSerialNumber"),
+  array("String", "IOPlatformUUID"),
+  array("Data", "system-id"),
+  array("Data", "dimm-part-number"),
+  array("Data", "dimm-serial-number"),
 );
 
-function call_IOPlatformSerialNumber($rgx,$m) {
+function strip_String($rgx,$m) {
   global $str;
 
   $tmp = swap($m[2]);
   $str = preg_replace($rgx, "$1{$tmp}", $str);
 }
 
-function call_SerialNumber($rgx,$m) {
+function strip_Data($rgx,$m) {
   global $str;
 
   $tmp = bin2hex(base64_decode(trim($m[2])));
@@ -154,12 +159,31 @@ function call_SerialNumber($rgx,$m) {
 function boot() {
   global $input, $output, $a, $str;
 
+  parse_args();
+
   $str = @file_get_contents($input);
 
-  foreach ($a as $k => $v) {
+  foreach ($a as $k) {
+    $t = $k[0];
+    $v = $k[1];
+    $v = preg_quote($v);
+
+    switch ($t) {
+      case "String":
+        $v = "(>{$v}<.*?string>+)([^<]+)";
+        break;
+      case "Data":
+        $v = "(>{$v}<.*?data>.*?)([a-z0-9\+\/\=]+)(.*?<\/data>+)";
+        break;
+      default:
+        // TODO: custom pattern here, isset $k[2]
+        break;
+    }
+
     $v = "#{$v}#is";
+
     if (preg_match($v, $str, $m)) {
-      call_user_func("call_{$k}", $v, $m);
+      call_user_func("strip_{$t}", $v, $m);
     }
   }
 
@@ -168,5 +192,4 @@ function boot() {
   if (file_exists($output)) xprint("Done", "Be safe next time");
 }
 
-parse_args();
 boot();
