@@ -47,3 +47,11 @@ __for educational purpose only__
 #### IoreXtripper
 
 > Strip your .ioreg ultra sensitive datas
+
+#### GenAppleALC
+
+> To remove `AppleALC` - `Plugins` by merging `HDA Hardware Config Resource` prop in `PinConfigs.kext` into main `Info.plist`- `IOKitPersonalities` prop after successfully compiling.
+
+#### KextToFfs
+
+> Convert kext to ffs, original script by PAVO
