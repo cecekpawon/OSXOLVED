@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=1.6
+gVer=1.7
 gTITLE="Clover Build Command v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -62,11 +62,11 @@ menu() {
   tabs -2
 
   printf "`cat <<EOF
-${C_MENU}====================================================
+${C_MENU}=============================================================
 ${C_BLUE}${gTITLE} ${C_MENU}: ${C_RED}${gME}
-${C_MENU}====================================================
+${C_MENU}=============================================================
 Revision SVN: ${C_HI}${vCloverSVN} ${C_MENU}| Src: ${vCloverSrc} ${C_MENU}| Boot: ${vCloverBoot}
-${C_MENU}----------------------------------------------------
+${C_MENU}-------------------------------------------------------------
 \t\t\t ${C_NUM}[0] ${C_MENU}Compile GCC
 \t\t\t ${C_NUM}[1] ${C_MENU}Revert SVN
 \t\t\t ${C_NUM}[2] ${C_MENU}Update SVN EDK2
@@ -79,7 +79,7 @@ ${C_MENU}----------------------------------------------------
 \t\t\t ${C_NUM}[9] ${C_MENU}Update Scripts
 \t\t\t${C_NUM}[10] ${C_MENU}Browse Scripts Repo
  ${C_NUM}[X|ENTER] ${C_RED}EXIT
-${C_MENU}----------------------------------------------------
+${C_MENU}-------------------------------------------------------------
 ${C_RED}Pick an option from the menu: ${C_NORMAL}
 EOF`"
 
@@ -106,12 +106,13 @@ go() {
 boot() {
   log "Initializing"
 
-  vCloverSVN=$(svn info $uClover | grep Revision | cut -c11-)
+  vCloverSVN=`svn info $uClover 2>&1 | grep Revision | cut -c11-`
+  [[ -z $vCloverSVN ]] && vCloverSVN=0
 
   C_HI=$C_MENU
 
   if [[ -d "${dClover}" && -d "${dClover}/.svn" ]]; then
-    vCloverSrc=$(svn info ${dClover} | grep Revision | cut -c11-)
+    vCloverSrc=`svn info "${dClover}" 2>&1  | grep Revision | cut -c11-`
   fi
 
   if [[ ! $vCloverSrc =~ ^[0-9]+$ ]]; then
@@ -135,6 +136,8 @@ boot() {
   elif [[ $vCloverSVN -gt $vCloverBoot ]]; then
     C_HI=$C_RED
   fi
+
+  [[ $vCloverSVN -eq 0 ]] && vCloverSVN="${C_PURPLE}Undetected"
 }
 
 compile_gcc() {
