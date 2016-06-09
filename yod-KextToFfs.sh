@@ -100,7 +100,8 @@ gen() {
 
   cat "$1/Contents/Info.plist" NullTerminator "$1/Contents/MacOS/$b" > "$b.bin" 2>/dev/null
 
-  bin/GenSec -s EFI_SECTION_PE32 -o "$b.pe32" "$b.bin"
+  #bin/GenSec -s EFI_SECTION_PE32 -o "$b.pe32" "$b.bin"
+  bin/GenSec -s EFI_SECTION_RAW -o "$b.pe32" "$b.bin"
   bin/GenSec -s EFI_SECTION_USER_INTERFACE -n "$b" -o "$b-1.pe32"
   bin/GenFfs -t EFI_FV_FILETYPE_FREEFORM -g $guid -o "ffs/$b.ffs" -i "$b.pe32" -i "$b-1.pe32"
   bin/GenSec -s EFI_SECTION_COMPRESSION -o "$b-2.pe32" "$b.pe32" "$b-1.pe32"
