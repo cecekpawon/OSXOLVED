@@ -73,7 +73,7 @@ device - 0x1c
 
 */
 
-$gVer = "1.3";
+$gVer = "1.4";
 $gTITLE = "PHP gfxutil v{$gVer}";
 $gUname = "cecekpawon";
 $gME = "@{$gUname} | thrsh.net";
@@ -205,6 +205,10 @@ function reset_settings() {
 
   $settings = new stdClass;
   /* set default value here */
+  $settings->dump = FALSE;
+  $settings->verbose = FALSE;
+  $settings->detect_strings = FALSE;
+  $settings->detect_numbers = FALSE;
 }
 
 
@@ -313,8 +317,14 @@ function readbin($bp, &$size, &$index, $len, &$ret) {
   }
 }
 
+function strbin($s) {
+  $s = hex2bin($s);
+  return (($s !== FALSE)) ? $s : FALSE;
+}
+
 function is_vchar($s) {
-  return preg_match('/^[\w\s\p{P}]+$/', hex2bin($s));
+  $s = hex2bin($s);
+  return (($s !== FALSE) && preg_match('/^[\w\s\p{P}]+$/', $s));
 }
 
 function is_ascii($s) {
@@ -726,7 +736,7 @@ function ReadBinary() {
       $length -= 4; $index += 4; $size -= 4;
       readbin($bp, $size, $index, $length, $bin);
 
-      if (!($key = hex2bin($bin))) {
+      if (!($key = strbin($bin))) {
         error("ReadBinary: empty key (length)");
       }
 
@@ -858,7 +868,6 @@ function print_gfx($gfx) {
           $pad = "8";
           break;
         case DATA_STRING:
-          $val = hex2bin($val);
           $b1 = $b2 = "'";
           break;
         default:
@@ -874,14 +883,17 @@ function print_gfx($gfx) {
       }
 
       if ($settings->verbose) {
-        printf("\"%s\"=$b1%s$b2\n", $key, $val);
+        printf("\"%s\"=$b1%s$b2\n", $key, ($gfx_entry->val_type === DATA_BINARY) ? $val : strbin($val));
       }
 
       if ($settings->ofile_type === FILE_XML) {
         $tmp = "string";
+        if (!$pad) {
+          $val = strbin($val);
+        }
         if ($gfx_entry->val_type === DATA_BINARY) {
           $tmp = "data";
-          $val =  base64_encode($val);
+          $val = base64_encode($val);
         }
         $k = $devprop_plist->createElement("key", $key);
         $v = $devprop_plist->createElement($tmp, $val);
@@ -935,9 +947,9 @@ function print_gfx($gfx) {
 
     if ($ret) {
       if ($settings->ofile_type === FILE_BIN) {
-        $ret = hex2bin($ret);
+        $ret = strbin($ret);
       }
-      @file_put_contents($settings->ofile, $ret);
+      if ($ret) @file_put_contents($settings->ofile, $ret);
     }
   }
 
