@@ -5,7 +5,7 @@
 # @cecekpawon 10/20/2015 00:26 AM
 # thrsh.net
 
-$gVer = "1.3";
+$gVer = "1.4";
 $gTITLE = "GPUFramebuffers v{$gVer}";
 $gUname = "cecekpawon";
 $gME = "@{$gUname} | thrsh.net";
@@ -16,6 +16,7 @@ $gRepoRAW = "https://raw.githubusercontent.com/{$gUname}/{$gBase}/master";
 $gFBNewVer = "10.11.4";
 $gOSVer = passVar("sw_vers -productVersion");
 $gFBNew = (version_compare($gOSVer, $gFBNewVer) >= 0);
+$gFBSierra = (version_compare($gOSVer, "10.12") >= 0);
 
 passthru("clear");
 
@@ -123,7 +124,7 @@ function toExt($b, $mb=0) {
 }
 
 function getbin($fb) {
-  global $fb_a, $sle;
+  global $fb_a, $sle, $gFBSierra;
 
   if (array_key_exists($fb, $fb_a) && is_file($bin = sprintf($sle, $fb_a[$fb], $fb_a[$fb]))) {
     $a = unpack("H*", file_get_contents($bin))[1];
@@ -139,8 +140,12 @@ function getbin($fb) {
         $r = "0[0-8]{1}00[0-2]{1}[26e]{1}0[4acd]{1}0[0-9]{14}[24]{1}[a-f0-9]{192}";
         break;
       case "skylake":
-        //$r = "[0-3]{4}[a-f0-9]{2}19[0-3]{8}00000004[a-f0-9]{176}";
-        $r = "[0-3]{4}[a-f0-9]{2}19[0-3]{8}([0-9]{24})?00000004[a-f0-9]{176}"; //10.11.4
+        if ($gFBSierra) {
+          $r = "[0-9]{4}[a-f0-9]{2}19[0-3]{8}([a-f0-9]{194})0000000[0-4]";
+        } else {
+          //$r = "[0-3]{4}[a-f0-9]{2}19[0-3]{8}00000004[a-f0-9]{176}";
+          $r = "[0-3]{4}[a-f0-9]{2}19[0-3]{8}([0-9]{24})?00000004[a-f0-9]{176}"; //10.11.4
+        }
         break;
       default:
         return;
@@ -177,8 +182,12 @@ foreach ($c as $k => $v) {
       if ($gFBNew) $v = substr_replace($v, "", 96 , 8);//10.11.4
       break;
     case "skylake":
-      if ($gFBNew) $v = substr_replace($v, "", 15 , 24);//10.11.4
-      $v = substr_replace($v, "", 96 , $gFBNew ? 16 : 8);
+      if ($gFBSierra) {
+        if (!preg_match("#ff0000000#i", $v)) continue 2;
+      } else {
+        if ($gFBNew) $v = substr_replace($v, "", 15 , 24);//10.11.4
+        $v = substr_replace($v, "", 96 , $gFBNew ? 16 : 8);
+      }
       break;
     default:
       break;
