@@ -4,7 +4,7 @@
 # @cecekpawon 10/24/2015 14:13 PM
 # thrsh.net
 
-gVer=1.2
+gVer=1.3
 gTITLE="Mount EFI v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -12,6 +12,22 @@ gBase="OSXOLVED"
 gRepo="https://github.com/${gUname}/${gBase}"
 gRepoRAW="https://raw.githubusercontent.com/${gUname}/${gBase}/master"
 gScriptName=${0##*/}
+
+gID=$(id -u)
+gDarVer=`uname -r | cut -d. -f1`
+gNeedSudo=0
+if [[ $gDarVer -gt 15 ]]; then
+  if [[ $gID -ne 0 ]]; then
+    sudo "${0}" "$@"
+    exit
+  fi
+  let gNeedSudo++
+fi
+
+isdone() {
+  [[ $gNeedSudo -gt 0 ]] && sudo -k
+  exit
+}
 
 C_MENU="\e[36m"
 C_BLUE="\e[38;5;27m"
@@ -54,7 +70,7 @@ gEFITotal=${#aEFI[@]}
 
 if [[ $gEFITotal -eq 0 ]]; then
   echo "Zero EFI partition detected!"
-  exit
+  isdone
 fi
 
 while getopts :aAuUoO gOpt; do
@@ -92,7 +108,7 @@ if [[ $gUpdate -ne 0 ]]; then
           [yY]) exec "${0}" "${@}";;
         esac
 
-        exit
+        isdone
       else
         echo "Update failed :(("
       fi
@@ -168,3 +184,4 @@ if [[ "${gChoose}" =~ ^[[:digit:]]+$ ]] && [[ $gChoose -lt $gEFITotal ]]; then
 fi
 
 #printf "${gMSG}"
+isdone
