@@ -69,6 +69,8 @@ valid() {
 
 main() {
   printf "${gHEAD}"
+  
+  gArgs=("$@")
 
   if [[ "$#" -lt 1 ]]; then
     printf "Drag <app(s)> here & ENTER: "
