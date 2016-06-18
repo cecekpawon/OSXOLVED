@@ -71,7 +71,7 @@ main() {
   printf "${gHEAD}"
 
   if [[ "$#" -lt 1 ]]; then
-    printf "Drag <kext(s)> here & ENTER: "
+    printf "Drag <app(s)> here & ENTER: "
     read -ea gArgs
   fi
 
