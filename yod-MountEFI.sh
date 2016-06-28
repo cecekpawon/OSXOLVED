@@ -4,7 +4,7 @@
 # @cecekpawon 10/24/2015 14:13 PM
 # thrsh.net
 
-gVer=1.3
+gVer=1.4
 gTITLE="Mount EFI v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -13,19 +13,7 @@ gRepo="https://github.com/${gUname}/${gBase}"
 gRepoRAW="https://raw.githubusercontent.com/${gUname}/${gBase}/master"
 gScriptName=${0##*/}
 
-gID=$(id -u)
-gDarVer=`uname -r | cut -d. -f1`
-gNeedSudo=0
-if [[ $gDarVer -gt 15 ]]; then
-  if [[ $gID -ne 0 ]]; then
-    sudo "${0}" "$@"
-    exit
-  fi
-  let gNeedSudo++
-fi
-
 isdone() {
-  [[ $gNeedSudo -gt 0 ]] && sudo -k
   exit
 }
 
@@ -139,7 +127,7 @@ EOF`"
 for gArg in "${aEFI[@]}"
 do
   gDevice=$(echo "${gArg}" | grep -o -e disk[[:digit:]])
-  gInfo=$(diskutil info "${gDevice}" | awk '/Media Name:/' | sed -e 's/^.*://' | sed 's/^ *//;s/ *Media//')
+  gInfo=$(diskutil info "${gDevice}" | grep 'Media Name:' | sed -e 's/.*://;s/^ *//')
 
   aPar+=("${gArg}")
   aDisk+=("${gDevice}")
@@ -165,15 +153,15 @@ if [[ "${gChoose}" =~ ^[[:digit:]]+$ ]] && [[ $gChoose -lt $gEFITotal ]]; then
   gPar=${aPar[$gChoose]}
   gLabel=${aLabel[$gChoose]}
   gOEFI=$(df | grep "${gPar}")
-  mEFI="/Volumes/EFI(${gPar})"
 
   (($gAuto)) && printf "Auto mount EFI on: ${gDisk} .."
   printf "\nMounting: ${gPar} (on ${gLabel}) ..\n"
 
   [[ ! -z "${gOEFI}" ]] && diskutil unmount "${gPar}"
-  [[ ! -d "${mEFI}" ]] && mkdir "${mEFI}"
 
-  diskutil mount -mountPoint "${mEFI}" "${gPar}"
+  diskutil mount "${gPar}"
+  
+  mEFI=$(diskutil info "${gPar}" | awk  '/^.*Point:/{ print $3 }')
 
   printf "Mounted on: ${mEFI} ..\n"
 
