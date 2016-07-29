@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=1.7
+gVer=1.8
 gTITLE="Clover Build Command v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -20,25 +20,38 @@ dSrc="${dHome}/src"
 dDesktop="${dHome}/Desktop"
 dEdk2="${dSrc}/edk2"
 dClover="${dEdk2}/Clover"
-gCloverDrivers=("CLOVERX64" "FSInject" "OsxAptioFixDrv" "OsxFatBinaryDrv")
-#gCloverDrivers=("CLOVERX64")
+gCloverDrivers=("FSInject" "OsxAptioFixDrv" "OsxFatBinaryDrv")
 gGCCVer="4.9"
 
 #gToolchain="GCC49"
-#gToolchain="XCODE5"
+gToolchain="XCODE5"
 #gToolchain="LLVM"
-gToolchain="XCLANG"
+#gToolchain="XCLANG"
+#gArch="IA32"
 gArch="X64"
 
-export CONF_PATH="${dClover}/Conf"
+CUSTOM_CONF_PATH="${dEdk2}/Conf"
 
 ## END: user define --//
+
+[[ -e "${CUSTOM_CONF_PATH}/target.txt" ]] && export CONF_PATH=${CUSTOM_CONF_PATH:-}
+
+case "${gToolchain}" in
+  XCLANG|LLVM)
+    dLlvmBin="/usr/bin"
+    dLlvmCloverBin="${dSrc}/llvm-build/Release/bin"
+    if [[ ! -x "${dLlvmCloverBin}/clang" && -x  "${dLlvmBin}/clang" ]]; then
+      mkdir -p "${dLlvmCloverBin}"
+      ln -s "${dLlvmBin}/clang" "${dLlvmCloverBin}/clang"
+    fi
+    ;;
+esac
 
 dEdk2Patch="${dClover}/Patches_for_EDK2"
 dCloverPkg="${dClover}/CloverPackage"
 dCloverPkgBin="${dCloverPkg}/sym"
 dCloverBoot="${dCloverPkg}/CloverV2/EFI/BOOT"
-dClover64="${dEdk2}/Build/Clover/RELEASE_${gToolchain}/${gArch}"
+dCloverBuildDir="${dEdk2}/Build/Clover/RELEASE_${gToolchain}/${gArch}"
 
 #uEdk2="svn://svn.code.sf.net/p/edk2/code/branches/UDK2015"
 uEdk2="svn://svn.code.sf.net/p/edk2/code/trunk/edk2"
@@ -156,7 +169,7 @@ compile_gcc() {
 
 run_fix() {
   [[ -d "${dEdk2Patch}" ]] && cp -R "${dEdk2Patch}"/* "${dEdk2}"
-  cd "${dEdk2}" && source ./edksetup.sh "BaseTools" &>/dev/null
+  cd "${dEdk2}" && source ./edksetup.sh "BaseTools"
 }
 
 update_edk2() {
@@ -197,7 +210,7 @@ EOF`") " sSvn
     read -p "Type revision: " sRev_u
 
     if [[ $sRev_u ]]; then
-      case "$sSvn" in
+      case "${sSvn}" in
         1) cd $dEdk2;;
         2) cd $dClover;;
         *) return 0;;
@@ -226,18 +239,21 @@ compile_clover() {
 copy_binary() {
   log "Copy binary to ${dDesktop}"
 
-  for drv in "${gCloverDrivers[@]}"
-  do
-    [[ -f "${dClover64}/$drv.efi" ]] && cp "${dClover64}/$drv.efi" "${dDesktop}/$drv-64.efi"
-  done
-  [[ -f "${dDesktop}/CLOVERX64-64.efi" ]] && mv "${dDesktop}/CLOVERX64-64.efi" "${dDesktop}/BOOTX64.efi"
+  if [[ ${#gCloverDrivers[@]} -ne 0 ]]; then
+    for drv in "${gCloverDrivers[@]}"
+    do
+      [[ -f "${dCloverBuildDir}/$drv.efi" ]] && cp "${dCloverBuildDir}/$drv.efi" "${dDesktop}/$drv-64.efi"
+    done
+  fi
+
+  [[ -f "${dCloverBuildDir}/CLOVER${gArch}.efi" ]] && cp "${dCloverBuildDir}/CLOVER${gArch}.efi" "${dDesktop}/BOOT${gArch}.efi"
 }
 
 open_build_dir() {
   log "Open Build Directory"
 
   [[ -d "${dCloverBoot}" ]] && open "${dCloverBoot}"
-  [[ -d "${dClover64}" ]] && open "${dClover64}"
+  [[ -d "${dCloverBuildDir}" ]] && open "${dCloverBuildDir}"
 }
 
 build_pkg() {
@@ -295,7 +311,7 @@ browse_scripts_repo() {
 go boot true
 
 while true; do
-  case "$opt" in
+  case "${opt}" in
        0) go compile_gcc;;
        1) go revert_svn;;
        2) go update_edk2;;
@@ -308,6 +324,6 @@ while true; do
        9) go update_scripts;;
       10) go browse_scripts_repo;;
     [xX]) break 1;;
-       *) [[ -z $opt ]] && exit || go;; #"$0"
+       *) [[ -z $opt ]] && exit || go;; #"${0}"
   esac
 done
