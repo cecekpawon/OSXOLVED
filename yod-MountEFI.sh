@@ -4,7 +4,7 @@
 # @cecekpawon 10/24/2015 14:13 PM
 # thrsh.net
 
-gVer=1.4
+gVer=1.5
 gTITLE="Mount EFI v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -160,8 +160,8 @@ if [[ "${gChoose}" =~ ^[[:digit:]]+$ ]] && [[ $gChoose -lt $gEFITotal ]]; then
   [[ ! -z "${gOEFI}" ]] && diskutil unmount "${gPar}"
 
   diskutil mount "${gPar}"
-  
-  mEFI=$(diskutil info "${gPar}" | awk  '/^.*Point:/{ print $3 }')
+
+  mEFI=$(diskutil info "${gPar}" | grep 'Mount Point:' | sed -e 's/.*://;s/^ *//')
 
   printf "Mounted on: ${mEFI} ..\n"
 
