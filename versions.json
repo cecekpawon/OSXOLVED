@@ -4,7 +4,7 @@
   "yod-GenWebdriver.sh": "1.0",
   "yod-GetFakeSMC.sh": "1.0",
   "yod-HDAVerbsAnalyzer.php": "1.0",
-  "yod-MountEFI.sh": "1.5",
+  "yod-MountEFI.sh": "1.6",
   "yod-SIPcfg.php": "1.2",
   "yod-TradKextInstaller.sh": "1.4",
   "yod-VerbsInColor.php": "1.0",

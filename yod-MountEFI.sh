@@ -4,7 +4,7 @@
 # @cecekpawon 10/24/2015 14:13 PM
 # thrsh.net
 
-gVer=1.5
+gVer=1.6
 gTITLE="Mount EFI v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -28,10 +28,10 @@ ${C_MENU}============================================
 ${C_BLUE}${gTITLE} ${C_MENU}: ${C_RED}${gME}
 ${C_MENU}============================================
 ${C_MENU}Usages\t: ${C_BLUE}./${gScriptName} ${C_MENU}[${C_NUM}-Options${C_MENU}]
-${C_MENU}\t\t\t\t: ${C_BLUE}./${gScriptName} ${C_NUM}-aou
+${C_MENU}\t\t: ${C_BLUE}./${gScriptName} ${C_NUM}-aou
 ${C_MENU}Options\t: ${C_NUM}-a${C_MENU}] auto-mount
-${C_MENU}\t\t\t\t: ${C_NUM}-o${C_MENU}] auto-open
-${C_MENU}\t\t\t\t: ${C_NUM}-u${C_MENU}] update-scripts
+${C_MENU}\t\t: ${C_NUM}-o${C_MENU}] auto-open
+${C_MENU}\t\t: ${C_NUM}-u${C_MENU}] update-scripts
 ${C_MENU}--------------------------------------------
 ${C_MENU}Inspiration: Clover Configurator, #longlive!
 ${C_MENU}--------------------------------------------${C_BLACK}\n\n
@@ -49,11 +49,11 @@ aPar=()
 aLabel=()
 i=0
 
-tabs -2
+tabs -6
 
 clear && printf "${gHEAD}"
 
-aEFI=($(diskutil list | grep EFI | grep -o -e disk[[:digit:]]s[[:digit:]]))
+aEFI=($(diskutil list | grep EFI | grep -o -e disk[[:digit:]]*s[[:digit:]]*))
 gEFITotal=${#aEFI[@]}
 
 if [[ $gEFITotal -eq 0 ]]; then
@@ -111,7 +111,7 @@ if [[ $gUpdate -ne 0 ]]; then
 fi
 
 gStr=""
-gStartup="$(diskutil info / | awk '/Identifier/' | grep -o -e disk[[:digit:]])"
+gStartup="$(diskutil info / | awk '/Identifier/' | grep -o -e disk[[:digit:]]*)"
 
 printf "`cat <<EOF
 Getting EFI disks ..
@@ -119,14 +119,14 @@ Getting EFI disks ..
 Choose one from available devices:
 [${C_BLUE}#${C_BLACK}] is current startup disk!
 
-----+-----------+---------------------------
+------+-----------+--------------------------
 [#]\t| Partition\t| Label
-----+-----------+---------------------------\n
+------+-----------+--------------------------\n
 EOF`"
 
 for gArg in "${aEFI[@]}"
 do
-  gDevice=$(echo "${gArg}" | grep -o -e disk[[:digit:]])
+  gDevice=$(echo "${gArg}" | grep -o -e disk[[:digit:]]*)
   gInfo=$(diskutil info "${gDevice}" | grep 'Media Name:' | sed -e 's/.*://;s/^ *//')
 
   aPar+=("${gArg}")
@@ -139,7 +139,7 @@ do
     (($gAuto)) && gChoose=$i
   fi
 
-  gStr+="[${C_HI}${i}${C_BLACK}]\t| ${C_HI}${gArg}${C_BLACK}\t\t| ${C_HI}${gInfo}${C_BLACK}\n"
+  gStr+="[${C_HI}${i}${C_BLACK}]\t| ${C_HI}${gArg}${C_BLACK}\t| ${C_HI}${gInfo}${C_BLACK}\n"
 
   let i++
 done
