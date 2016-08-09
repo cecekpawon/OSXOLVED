@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=1.8
+gVer=1.9
 gTITLE="Clover Build Command v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -29,6 +29,8 @@ gToolchain="XCODE5"
 #gToolchain="XCLANG"
 #gArch="IA32"
 gArch="X64"
+gArgs=""
+#gArgs="-n 4"
 
 CUSTOM_CONF_PATH="${dEdk2}/Conf"
 
@@ -36,14 +38,19 @@ CUSTOM_CONF_PATH="${dEdk2}/Conf"
 
 [[ -e "${CUSTOM_CONF_PATH}/target.txt" ]] && export CONF_PATH=${CUSTOM_CONF_PATH:-}
 
+gCloverPatches=true
+
 case "${gToolchain}" in
   XCLANG|LLVM)
-    dLlvmBin="/usr/bin"
-    dLlvmCloverBin="${dSrc}/llvm-build/Release/bin"
-    if [[ ! -x "${dLlvmCloverBin}/clang" && -x  "${dLlvmBin}/clang" ]]; then
-      mkdir -p "${dLlvmCloverBin}"
-      ln -s "${dLlvmBin}/clang" "${dLlvmCloverBin}/clang"
-    fi
+      dLlvmBin="/usr/bin"
+      dLlvmCloverBin="${dSrc}/llvm-build/Release/bin"
+      if [[ ! -x "${dLlvmCloverBin}/clang" && -x  "${dLlvmBin}/clang" ]]; then
+        mkdir -p "${dLlvmCloverBin}"
+        ln -s "${dLlvmBin}/clang" "${dLlvmCloverBin}/clang"
+      fi
+    ;;
+  XCODE5)
+      $gCloverPatches = false
     ;;
 esac
 
@@ -51,7 +58,8 @@ dEdk2Patch="${dClover}/Patches_for_EDK2"
 dCloverPkg="${dClover}/CloverPackage"
 dCloverPkgBin="${dCloverPkg}/sym"
 dCloverBoot="${dCloverPkg}/CloverV2/EFI/BOOT"
-dCloverBuildDir="${dEdk2}/Build/Clover/RELEASE_${gToolchain}/${gArch}"
+dCloverBuildDir="${dEdk2}/Build/Clover/RELEASE_${gToolchain}"
+dCloverBuildDirArch="${dCloverBuildDir}/${gArch}"
 
 #uEdk2="svn://svn.code.sf.net/p/edk2/code/branches/UDK2015"
 uEdk2="svn://svn.code.sf.net/p/edk2/code/trunk/edk2"
@@ -86,11 +94,12 @@ ${C_MENU}-------------------------------------------------------------
 \t\t\t ${C_NUM}[3] ${C_MENU}Update SVN Clover
 \t\t\t ${C_NUM}[4] ${C_MENU}Browse Clover Commits
 \t\t\t ${C_NUM}[5] ${C_MENU}Compile Clover
-\t\t\t ${C_NUM}[6] ${C_MENU}Copy Binary
-\t\t\t ${C_NUM}[7] ${C_MENU}Open Build DIR
-\t\t\t ${C_NUM}[8] ${C_MENU}Build PKG Installer
-\t\t\t ${C_NUM}[9] ${C_MENU}Update Scripts
-\t\t\t${C_NUM}[10] ${C_MENU}Browse Scripts Repo
+\t\t\t ${C_NUM}[6] ${C_MENU}Clean Compile Clover
+\t\t\t ${C_NUM}[7] ${C_MENU}Copy Binary
+\t\t\t ${C_NUM}[8] ${C_MENU}Open Build Directory
+\t\t\t ${C_NUM}[9] ${C_MENU}Build PKG Installer
+\t\t\t${C_NUM}[10] ${C_MENU}Update Scripts
+\t\t\t${C_NUM}[11] ${C_MENU}Browse Scripts Repo
  ${C_NUM}[X|ENTER] ${C_RED}EXIT
 ${C_MENU}-------------------------------------------------------------
 ${C_RED}Pick an option from the menu: ${C_NORMAL}
@@ -139,7 +148,7 @@ boot() {
   vCloverBoot=$(LC_ALL=C ioreg -l -pIODeviceTree | \
     sed -nE 's@.*boot-log.*<([0-9a-fA-F]*)>.*@\1@p' | \
     xxd -r -p                                       | \
-    grep -Esio 'clover\srev.([0-9]+)'              | \
+    grep -Esio 'Clover.revision:.([0-9]+)'              | \
     awk '{print $3}')
     #sed -nE 's/^.*revision: *([0-9]+).*$/\1/p')
 
@@ -168,7 +177,7 @@ compile_gcc() {
 }
 
 run_fix() {
-  [[ -d "${dEdk2Patch}" ]] && cp -R "${dEdk2Patch}"/* "${dEdk2}"
+  [[ -d "${dEdk2Patch}" && $gCloverPatches -eq true ]] && cp -R "${dEdk2Patch}"/* "${dEdk2}"
   cd "${dEdk2}" && source ./edksetup.sh "BaseTools"
 }
 
@@ -227,7 +236,7 @@ compile_clover() {
 
   if [[ -f "${dClover}/ebuild.sh" ]]; then
     run_fix
-    "${dClover}"/ebuild.sh -a ${gArch} -t ${gToolchain}
+    "${dClover}"/ebuild.sh -a ${gArch} -t ${gToolchain} "${gArgs}"
   else
     log "No Clover sources. Start cloning"
 
@@ -236,17 +245,24 @@ compile_clover() {
   fi
 }
 
+clean_compile_clover() {
+  log "Clean Build Directory"
+
+  [[ -d "${dCloverBuildDir}" ]] && rm -rf "${dCloverBuildDir}"
+  compile_clover
+}
+
 copy_binary() {
   log "Copy binary to ${dDesktop}"
 
   if [[ ${#gCloverDrivers[@]} -ne 0 ]]; then
     for drv in "${gCloverDrivers[@]}"
     do
-      [[ -f "${dCloverBuildDir}/$drv.efi" ]] && cp "${dCloverBuildDir}/$drv.efi" "${dDesktop}/$drv-64.efi"
+      [[ -f "${dCloverBuildDirArch}/$drv.efi" ]] && cp "${dCloverBuildDirArch}/$drv.efi" "${dDesktop}/$drv-64.efi"
     done
   fi
 
-  [[ -f "${dCloverBuildDir}/CLOVER${gArch}.efi" ]] && cp "${dCloverBuildDir}/CLOVER${gArch}.efi" "${dDesktop}/BOOT${gArch}.efi"
+  [[ -f "${dCloverBuildDirArch}/CLOVER${gArch}.efi" ]] && cp "${dCloverBuildDirArch}/CLOVER${gArch}.efi" "${dDesktop}/BOOT${gArch}.efi"
 }
 
 open_build_dir() {
@@ -318,11 +334,12 @@ while true; do
        3) go update_clover;;
        4) go browse_clover_commits;;
        5) go compile_clover;;
-       6) go copy_binary;;
-       7) go open_build_dir;;
-       8) go build_pkg;;
-       9) go update_scripts;;
-      10) go browse_scripts_repo;;
+       6) go clean_compile_clover;;
+       7) go copy_binary;;
+       8) go open_build_dir;;
+       9) go build_pkg;;
+      10) go update_scripts;;
+      11) go browse_scripts_repo;;
     [xX]) break 1;;
        *) [[ -z $opt ]] && exit || go;; #"${0}"
   esac
