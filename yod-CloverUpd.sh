@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=1.9
+gVer=2.0
 gTITLE="Clover Build Command v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -14,6 +14,8 @@ gRepoRAW="https://raw.githubusercontent.com/${gUname}/${gBase}/master"
 gScriptName=${0##*/}
 dHome="/Users/$(who am i | awk '{print $1}')"
 
+gBuildThreads=$(sysctl -n hw.logicalcpu)
+
 ## START: user define //--
 
 dSrc="${dHome}/src"
@@ -22,23 +24,28 @@ dEdk2="${dSrc}/edk2"
 dClover="${dEdk2}/Clover"
 gCloverDrivers=("FSInject" "OsxAptioFixDrv" "OsxFatBinaryDrv")
 gGCCVer="4.9"
+gToolchainDir="${dClover}/../../opt/local"
 
 #gToolchain="GCC49"
 gToolchain="XCODE5"
-#gToolchain="LLVM"
 #gToolchain="XCLANG"
+#gToolchain="LLVM"
 #gArch="IA32"
 gArch="X64"
-gArgs=""
-#gArgs="-n 4"
+gBuildTarget="RELEASE"
+
+gArgs="-D ANDX86 -D DISABLE_USB_SUPPORT -n ${gBuildThreads} --edk2shell FullShell"
 
 CUSTOM_CONF_PATH="${dEdk2}/Conf"
+
+#######################################
+gCloverPatches=0
+gCleanBuild=0
+#######################################
 
 ## END: user define --//
 
 [[ -e "${CUSTOM_CONF_PATH}/target.txt" ]] && export CONF_PATH=${CUSTOM_CONF_PATH:-}
-
-gCloverPatches=true
 
 case "${gToolchain}" in
   XCLANG|LLVM)
@@ -50,16 +57,19 @@ case "${gToolchain}" in
       fi
     ;;
   XCODE5)
-      $gCloverPatches = false
+      gCloverPatches=0
     ;;
 esac
 
+fEdk2ShellPkg="${dEdk2}/ShellPkg/ShellPkg.dsc"
 dEdk2Patch="${dClover}/Patches_for_EDK2"
 dCloverPkg="${dClover}/CloverPackage"
 dCloverPkgBin="${dCloverPkg}/sym"
 dCloverBoot="${dCloverPkg}/CloverV2/EFI/BOOT"
 dCloverBuildDir="${dEdk2}/Build/Clover/RELEASE_${gToolchain}"
 dCloverBuildDirArch="${dCloverBuildDir}/${gArch}"
+dEdk2ShellPkgBuildDir="${dEdk2}/Build/Shell/RELEASE_${gToolchain}"
+dClover="${dEdk2}/Clover"
 
 #uEdk2="svn://svn.code.sf.net/p/edk2/code/branches/UDK2015"
 uEdk2="svn://svn.code.sf.net/p/edk2/code/trunk/edk2"
@@ -88,13 +98,15 @@ ${C_BLUE}${gTITLE} ${C_MENU}: ${C_RED}${gME}
 ${C_MENU}=============================================================
 Revision SVN: ${C_HI}${vCloverSVN} ${C_MENU}| Src: ${vCloverSrc} ${C_MENU}| Boot: ${vCloverBoot}
 ${C_MENU}-------------------------------------------------------------
+==> Arch: ${gArch} | BuildTarget: ${gBuildTarget} | Toolchain: ${gToolchain}
+${C_MENU}-------------------------------------------------------------
 \t\t\t ${C_NUM}[0] ${C_MENU}Compile GCC
 \t\t\t ${C_NUM}[1] ${C_MENU}Revert SVN
 \t\t\t ${C_NUM}[2] ${C_MENU}Update SVN EDK2
 \t\t\t ${C_NUM}[3] ${C_MENU}Update SVN Clover
 \t\t\t ${C_NUM}[4] ${C_MENU}Browse Clover Commits
 \t\t\t ${C_NUM}[5] ${C_MENU}Compile Clover
-\t\t\t ${C_NUM}[6] ${C_MENU}Clean Compile Clover
+\t\t\t ${C_NUM}[6] ${C_MENU}Compile EDK2 ShellPkg
 \t\t\t ${C_NUM}[7] ${C_MENU}Copy Binary
 \t\t\t ${C_NUM}[8] ${C_MENU}Open Build Directory
 \t\t\t ${C_NUM}[9] ${C_MENU}Build PKG Installer
@@ -177,8 +189,13 @@ compile_gcc() {
 }
 
 run_fix() {
-  [[ -d "${dEdk2Patch}" && $gCloverPatches -eq true ]] && cp -R "${dEdk2Patch}"/* "${dEdk2}"
-  cd "${dEdk2}" && source ./edksetup.sh "BaseTools"
+  if [[ ! -d "${gToolchainDir}" ]]; then
+    log "${gToolchainDir}"
+  else
+    export TOOLCHAIN_DIR="${gToolchainDir}"
+    [[ -d "${dEdk2Patch}" && $gCloverPatches -eq 1 ]] && cp -R "${dEdk2Patch}"/* "${dEdk2}"
+    cd "${dEdk2}" && source ./edksetup.sh "BaseTools"
+  fi
 }
 
 update_edk2() {
@@ -232,6 +249,12 @@ EOF`") " sSvn
 }
 
 compile_clover() {
+  if [[ $gCleanBuild -eq 1 ]]; then
+    log "Clean Clover Build Directory"
+
+    [[ -d "${dCloverBuildDir}" ]] && rm -rf "${dCloverBuildDir}"
+  fi
+
   log "Compiling Clover"
 
   if [[ -f "${dClover}/ebuild.sh" ]]; then
@@ -245,11 +268,19 @@ compile_clover() {
   fi
 }
 
-clean_compile_clover() {
-  log "Clean Build Directory"
+compile_shellpkg() {
+  if [[ $gCleanBuild -eq 1 ]]; then
+    log "Clean EDK2 ShellPkg Build Directory"
 
-  [[ -d "${dCloverBuildDir}" ]] && rm -rf "${dCloverBuildDir}"
-  compile_clover
+    [[ -d "${dEdk2ShellPkgBuildDir}" ]] && rm -rf "${dEdk2ShellPkgBuildDir}"
+  fi
+
+  log "Compiling EDK2 ShellPkg"
+
+  if [[ -f "${fEdk2ShellPkg}" ]]; then
+    run_fix
+    build -p "${fEdk2ShellPkg}" -a ${gArch} -t ${gToolchain} -n ${gBuildThreads} -b RELEASE
+  fi
 }
 
 copy_binary() {
@@ -334,7 +365,7 @@ while true; do
        3) go update_clover;;
        4) go browse_clover_commits;;
        5) go compile_clover;;
-       6) go clean_compile_clover;;
+       6) go compile_shellpkg;;
        7) go copy_binary;;
        8) go open_build_dir;;
        9) go build_pkg;;
