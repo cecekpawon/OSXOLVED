@@ -14,13 +14,13 @@ gRepoRAW="https://raw.githubusercontent.com/${gUname}/${gBase}/master"
 gScriptName=${0##*/}
 
 gHEAD=`cat <<EOF
-=========================================
-Part of ${gTITLE} script by PAVO
------------------------------------------
+===============================================
+Part of ${gTITLE} script by FredWst and STLVNUB
+-----------------------------------------------
 Mods v${gVer} : ${gME}
------------------------------------------
+-----------------------------------------------
 Cruel World! Boring without you THe KiNG!
-=========================================\n\n
+===============================================\n\n
 EOF`
 
 update() {

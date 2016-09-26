@@ -54,8 +54,12 @@ __for educational purpose only__
 
 #### KextToFfs
 
-> Convert kext to ffs, original script by PAVO
+> Convert kext to ffs, original script by FredWst and STLVNUB
 
 #### OpenGate
 
 > Gatekeeper free your trusted application(s)
+
+#### IconCache
+
+> Rebuild application(s) icon cache
