@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=2.1
+gVer=2.2
 gTITLE="Clover Build Command v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -31,19 +31,26 @@ dDesktop="${dHome}/Desktop"
 # ├── opt
 # │   └── local
 
-
 dSrc="${dHome}/src"
 dEdk2="${dSrc}/edk2"
 dClover="${dEdk2}/Clover"
-dToolchainDir="${dClover}/../../opt/local"
+#dToolchainDir="${dClover}/../../opt/local"
+dToolchainDir="${dSrc}/opt/local"
 
 ## Toolchain
 
-gGCCVer="4.9"
-gToolchain="GCC49"
+export GCC5_BIN="${dToolchainDir}/cross/bin/x86_64-clover-linux-gnu-"
+export NASM_PREFIX="${dToolchainDir}/bin/"
+export CLANG_BIN="${dSrc}/llvm-build/Release/bin/"
+export LLVM_BIN="${dSrc}/llvm-build/Release/bin/"
+export MTOC_BIN="/usr/local/bin/"
+
+#gGCCVer="49"
+gGCCVer="5"
+#gToolchain="GCC49"
+gToolchain="GCC5"
 #gToolchain="XCODE5"
 #gToolchain="XCLANG"
-#gToolchain="CLANG38"
 
 ## ARCH & Build
 
@@ -54,9 +61,12 @@ gBuildTarget="RELEASE" # / DEBUG
 
 #CUSTOM_CONF_PATH="${dEdk2}/Conf"
 CUSTOM_CONF_PATH="${dClover}/Conf"
-#CUSTOM_CLANG38_BIN="${dSrc}/clang38/bin/"
+
+export LC_ALL=en_US.UTF-8
+#export LANG=en_US.UTF-8
 
 ## URL
+
 #uEdk2="svn://svn.code.sf.net/p/edk2/code/branches/UDK2015" # STABLE
 uEdk2="svn://svn.code.sf.net/p/edk2/code/trunk/edk2"
 uClover="svn://svn.code.sf.net/p/cloverefiboot/code"
@@ -67,16 +77,21 @@ uCloverCommits="${uClover}/commit_browser"
 gEdk2Patch=0      # Apply Clover EDK2 Patches
 gCleanBuild=0     # Clean up build DIR 1st before compile
 gDirectBuild=1    # Compile Clover via ebuild.sh (Wrap) / EDK2 'build' (Direct)
+gCloverLog="${dClover}/clover.log"
+gCloverRevision="0000"
+gCloverVersion_h="${dClover}/Version.h"
+dEdk2Buildtools="${dEdk2}/BaseTools/Source/C"
 
 ## Generic Arguments
 
-gGenArgs="-a ${gArch} -t ${gToolchain} -n ${gBuildThreads} -b ${gBuildTarget}"
+gGenArgs="-a ${gArch} -n ${gBuildThreads} -b ${gBuildTarget} -j ${gCloverLog}"
 
 ## Package
 
 ## Clover
-gCloverDrivers=("OsxAptioFixDrv") # "FSInject" "OsxAptioFixDrv" "OsxFatBinaryDrv"
-gCloverArgs="-D DISABLE_USB_SUPPORT -DDEBUG_TEXT" # -DDBG_APTIO --module=rEFIt_UEFI/refit.inf --edk2shell FullShell
+gCloverDrivers=("FSInject" "OsxAptioFixDrv") # "OsxAptioFixDrv" "OsxFatBinaryDrv"
+gCloverArgs="-DDEBUG_TEXT" # -DDISABLE_LTO -DDBG_APTIO --module=rEFIt_UEFI/refit.inf --edk2shell FullShell
+gToolchains=("GCC49" "GCC5" "XCODE5" "XCLANG")
 
 dEdk2Patch="${dClover}/Patches_for_EDK2"
 dCloverPkg="${dClover}/CloverPackage"
@@ -86,7 +101,7 @@ dCloverBuildDirArch="${dCloverBuildDir}/${gArch}"
 
 # DIR for post Clover compile action. See: post_compile()
 
-dCloverCopyTarget="${dDesktop}/QVM/DISK/EFI"
+dCloverCopyTarget="/Volumes/XDATA/QVM/DISK/EFI"
 
 ## OpenCorePkg
 #fEdk2ShellPkg="${dEdk2}/OpenCorePkg/OpenCorePkg.dsc"
@@ -98,12 +113,13 @@ gEdk2ShellPkgArgs=
 gEdk2OvmfPkgArgs="-D SECURE_BOOT_ENABLE=TRUE" # -D DEBUG_ON_SERIAL_PORT -D SMM_REQUIRE=TRUE"
 
 # DIR for post Ovmf compile action.
-gEdk2OvmfPkdCopyTarget="${dDesktop}/QVM/BIOS/"
+gEdk2OvmfPkdCopyTarget="/Volumes/XDATA/QVM/BIOS/"
 
 ## END:   user define //<--
 ###########################
 
 tCleanBuild=0
+gBuildError=0
 
 vCloverSVN=""
 vCloverSrc=""
@@ -134,14 +150,16 @@ ${C_MENU}-------------------------------------------------------------
 \t\t\t ${C_NUM}[2] ${C_MENU}Update SVN EDK2
 \t\t\t ${C_NUM}[3] ${C_MENU}Update SVN Clover
 \t\t\t ${C_NUM}[4] ${C_MENU}Browse Clover Commits
-\t\t\t ${C_NUM}[5] ${C_MENU}Compile Clover\t\t\t\t\t/ ${C_NUM}[c5] ${C_MENU}for CLEAN Build
-\t\t\t ${C_NUM}[6] ${C_MENU}Compile EDK2 ShellPkg\t/ ${C_NUM}[c6] ${C_MENU}for CLEAN Build
-\t\t\t ${C_NUM}[7] ${C_MENU}Compile EDK2 OvmfPkg\t\t/ ${C_NUM}[c7] ${C_MENU}for CLEAN Build
-\t\t\t ${C_NUM}[8] ${C_MENU}Copy Binary
-\t\t\t ${C_NUM}[9] ${C_MENU}Open Build Directory
-\t\t\t${C_NUM}[10] ${C_MENU}Build PKG Installer
-\t\t\t${C_NUM}[11] ${C_MENU}Update Scripts
-\t\t\t${C_NUM}[12] ${C_MENU}Browse Scripts Repo
+\t\t\t ${C_NUM}[5] ${C_MENU}Compile Clover\t\t\t/ ${C_NUM}[c5]: ${C_MENU}CLEAN_BUILD
+\t\t\t ${C_NUM}[6] ${C_MENU}Compile ShellPkg\t\t/ ${C_NUM}[c6]: ${C_MENU}CLEAN_BUILD
+\t\t\t ${C_NUM}[7] ${C_MENU}Compile OvmfPkg\t\t/ ${C_NUM}[c7]: ${C_MENU}CLEAN_BUILD
+\t\t\t ${C_NUM}[8] ${C_MENU}Compile Buildtools\t/ ${C_NUM}[c8]: ${C_MENU}CLEAN_BUILD
+\t\t\t ${C_NUM}[9] ${C_MENU}Copy Binary
+\t\t\t${C_NUM}[10] ${C_MENU}Open Build Directory
+\t\t\t${C_NUM}[11] ${C_MENU}Build PKG Installer
+\t\t\t${C_NUM}[12] ${C_MENU}Update Scripts
+\t\t\t${C_NUM}[13] ${C_MENU}Browse Scripts Repo
+\t\t\t${C_NUM}[13] ${C_MENU}Switch Toolchain
  ${C_NUM}[X|ENTER] ${C_RED}EXIT
 ${C_MENU}-------------------------------------------------------------
 ${C_RED}Pick an option from the menu: ${C_NORMAL}
@@ -164,6 +182,7 @@ go() {
     printf "\nDone!"
   fi
   printf "\n\n"
+  gBuildError=0
   menu
 }
 
@@ -171,7 +190,6 @@ boot() {
   log "Initializing"
 
   [[ -e "${CUSTOM_CONF_PATH}/target.txt" ]] && export CONF_PATH=${CUSTOM_CONF_PATH:-}
-  #[[ -d "${CUSTOM_CLANG38_BIN}" ]] && export CLANG38_BIN=${CUSTOM_CLANG38_BIN:-}
 
   case "${gToolchain}" in
     XCLANG|LLVM)
@@ -207,9 +225,7 @@ boot() {
   vCloverBoot=$(LC_ALL=C ioreg -l -pIODeviceTree | \
     sed -nE 's@.*boot-log.*<([0-9a-fA-F]*)>.*@\1@p' | \
     xxd -r -p                                       | \
-    grep -Esio 'Clover.revision:.([0-9]+)'              | \
-    awk '{print $3}')
-    #sed -nE 's/^.*revision: *([0-9]+).*$/\1/p')
+    sed -nE 's/^.*revision: *([0-9]+).*$/\1/p')
 
   if [[ ! $vCloverBoot =~ ^[0-9]+$ ]]; then
     vCloverBoot="${C_PURPLE}Undetected"
@@ -219,20 +235,6 @@ boot() {
   fi
 
   [[ $vCloverSVN -eq 0 ]] && vCloverSVN="${C_PURPLE}Undetected"
-}
-
-compile_gcc() {
-  log "Compiling GCC (Need Commandlinetools xCode)"
-
-  if [[ -d "${dClover}" && -f "${dClover}/buildgcc-${gGCCVer}.sh" ]]; then
-    run_fix && sudo make -C BaseTools/Source/C
-    cd "${dClover}" && sudo ./buildgcc-$gGCCVer.sh && sudo ./buildnasm.sh && sudo ./buildgettext.sh
-    sudo -k
-  else
-    log "No EDK2 / Clover sources. Start cloning"
-    update_clover
-    compile_gcc
-  fi
 }
 
 run_fix() {
@@ -245,15 +247,43 @@ run_fix() {
   fi
 }
 
-update_edk2() {
-  log "Updating EDK2"
+compile_buildtools() {
+  log "Compile Buildtools"
 
-  svn co "${uEdk2}" "${dEdk2}"
+  if [[ -d "${dEdk2Buildtools}" ]]; then
+    cd "${dEdk2Buildtools}"
+    if [[ $gCleanBuild -eq 1 || $tCleanBuild -eq 1 ]]; then
+      log "Clean Buildtools"
+
+      make clean
+    fi
+
+    make
+  fi
+}
+
+compile_gcc() {
+  log "Compile GCC (Need Commandlinetools xCode)"
+
+  if [[ -d "${dClover}" && -f "${dClover}/buildgcc-${gGCCVer}.sh" ]]; then
+    cd "${dClover}" && ./buildgcc-$gGCCVer.sh && ./buildnasm.sh && ./buildgettext.sh
+  else
+    log "No EDK2 / Clover sources. Start cloning"
+    update_clover
+    compile_gcc
+  fi
+}
+
+update_edk2() {
+  log "Update EDK2"
+
+  #svn co "${uEdk2}" "${dEdk2}"
+  cd "${dEdk2}" && svn up
 }
 
 update_clover() {
   if [[ -f "${dEdk2}/edksetup.sh" ]]; then
-    log "Updating Clover"
+    log "Update Clover"
 
     svn co "${uClover}" "${dClover}"
     run_fix
@@ -290,7 +320,7 @@ EOF`") " sSvn
       esac
 
       log "Reverting SVN";
-      svn update -r  $sRev_u
+      svn up -r  $sRev_u
     fi
   fi
 }
@@ -298,23 +328,28 @@ EOF`") " sSvn
 post_compile() {
   log "Post Compile Clover"
 
+  if [[ $gBuildError -eq 1 ]]; then
+    echo "Build error, abort :((((("
+    return
+  fi
+
   if [[ ! -d "${dCloverCopyTarget}" ]]; then
     read -p "Cannot copy binary :((((("
   else
     copy_binary
   fi
 
-  iso="${dDesktop}/Untitled.iso"
-  vol="/Volumes/Untitled"
+  iso="${dDesktop}/VM.iso"
+  vol="/Volumes/VM"
   efi="${dCloverBuildDirArch}/CLOVER${gArch}.efi"
 
-  if [[ -e "$iso" ]]; then
-    if [[ ! -d "$vol" ]]; then
-      hdiutil mount -quiet "$iso"
+  if [[ -e "${iso}" ]]; then
+    if [[ ! -d "${vol}" ]]; then
+      hdiutil mount -quiet "${iso}"
     fi
 
-    [[ -e "$efi" ]] && cp "$efi" "$vol"
-    hdiutil unmount -quiet "$vol"
+    [[ -e "$efi" ]] && cp "$efi" "${vol}/CLOVER/BOOT${gArch}.efi"
+    hdiutil unmount -quiet "${vol}"
   fi
 }
 
@@ -327,7 +362,7 @@ compile_clover() {
 
   tCleanBuild=0
 
-  log "Compiling Clover"
+  log "Compile Clover"
 
   if [[ $gDirectBuild -eq 1 ]]; then
     fCheck="${dClover}/Clover.dsc"
@@ -338,9 +373,18 @@ compile_clover() {
   if [[ -f "${fCheck}" ]]; then
     run_fix
     if [[ $gDirectBuild -eq 1 ]]; then
-      build -p "${fCheck}" ${gGenArgs} ${gCloverArgs}
+      # Gen Version.h
+      gCloverCmd="build -p ${fCheck} ${gGenArgs} -t ${gToolchain} ${gCloverArgs}"
+      gDate=$(date '+%Y-%m-%d %H:%M:%S')
+      echo "#define FIRMWARE_VERSION \"2.31\"" > "${gCloverVersion_h}"
+      echo "#define FIRMWARE_BUILDDATE \"${gDate}\"" >> "${gCloverVersion_h}"
+      echo "#define FIRMWARE_REVISION L\"${gCloverRevision}\"" >> "${gCloverVersion_h}"
+      echo "#define REVISION_STR \"Clover revision: ${gCloverRevision}\"" >> "${gCloverVersion_h}"
+      echo "#define BUILDINFOS_STR \"${gCloverCmd}\"" >> "${gCloverVersion_h}"
+      eval "${gCloverCmd}"
+      gBuildError=`echo $?`
     else
-      "${fCheck}" ${gGenArgs} ${gCloverArgs}
+      "${fCheck}" ${gGenArgs} -t ${gToolchain} ${gCloverArgs}
     fi
     post_compile
   else
@@ -362,19 +406,19 @@ compile_shellpkg() {
 
   tCleanBuild=0
 
-  log "Compiling EDK2 ShellPkg"
+  log "Compile EDK2 ShellPkg"
 
   fDsc="${dEdk2}/ShellPkg/ShellPkg.dsc"
 
   if [[ -f "${fDsc}" ]]; then
     run_fix
-    build -p "${fDsc}" ${gGenArgs} ${gEdk2ShellPkgArgs}
+    build -p "${fDsc}" ${gGenArgs} -t ${gToolchain} ${gEdk2ShellPkgArgs}
   fi
 }
 
 compile_ovmfpkg() {
-  if [[ "${gToolchain}" != "GCC49" ]]; then
-    log "Unsupported Toolchain: '${gToolchain}' to build this pkg. Switch to GCC49."
+  if [[ "${gToolchain}" != *"GCC"* ]];then
+    log "Unsupported Toolchain: '${gToolchain}' to build this pkg. Switch to GCC*."
     return
   fi
 
@@ -388,16 +432,34 @@ compile_ovmfpkg() {
 
   tCleanBuild=0
 
-  log "Compiling EDK2 OvmfPkg"
+  log "Compile EDK2 OvmfPkg"
 
   fDsc="${dEdk2}/OvmfPkg/OvmfPkg${gArch}.dsc"
 
   if [[ -f "${fDsc}" ]]; then
     run_fix
-    build -p "${fDsc}" ${gGenArgs} ${gEdk2OvmfPkgArgs}
+    build -p "${fDsc}" ${gGenArgs} -t ${gToolchain} ${gEdk2OvmfPkgArgs}
   fi
 
   [[ -f "${dBuild}/FV/OVMF.fd" && -d "${gEdk2OvmfPkdCopyTarget}" ]] && cp "${dBuild}/FV/OVMF.fd" "${gEdk2OvmfPkdCopyTarget}"
+}
+
+switch_toolchain() {
+  i=0
+  mtc=""
+  for tc in "${gToolchains[@]}"
+  do
+    ((i=i+1))
+    mtc="`printf "${mtc}${C_NUM}[$i] ${C_MENU}${tc}"`\n"
+  done
+  mtc="`printf "${mtc}${C_NORMAL}Choose Toolchain:"`"
+
+  read -p "$(printf "$mtc") " stc
+
+  if [[ $stc -ge 1 && $stc -le $i ]]; then
+    ((stc=stc-1))
+    gToolchain="${gToolchains[$stc]}"
+  fi
 }
 
 copy_binary() {
@@ -486,16 +548,19 @@ while true; do
        3) go update_clover;;
        4) go browse_clover_commits;;
        5) go compile_clover;;
-      c5) tCleanBuild=1 && go compile_clover;;
+   c5|C5) tCleanBuild=1 && go compile_clover;;
        6) go compile_shellpkg;;
-      c6) tCleanBuild=1 && go compile_shellpkg;;
+   c6|C6) tCleanBuild=1 && go compile_shellpkg;;
        7) go compile_ovmfpkg;;
-      c7) tCleanBuild=1 && go compile_ovmfpkg;;
+   c7|C7) tCleanBuild=1 && go compile_ovmfpkg;;
+       8) go compile_buildtools;;
+   c8|C8) tCleanBuild=1 && go compile_buildtools;;
        8) go copy_binary;;
        9) go open_build_dir;;
       10) go build_pkg;;
       11) go update_scripts;;
       12) go browse_scripts_repo;;
+      13) go switch_toolchain;;
     [xX]) break 1;;
        *) [[ -z $opt ]] && exit || go;; #"${0}"
   esac
