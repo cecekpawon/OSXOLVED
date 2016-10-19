@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=2.2
+gVer=2.3
 gTITLE="Clover Build Command v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -159,7 +159,7 @@ ${C_MENU}-------------------------------------------------------------
 \t\t\t${C_NUM}[11] ${C_MENU}Build PKG Installer
 \t\t\t${C_NUM}[12] ${C_MENU}Update Scripts
 \t\t\t${C_NUM}[13] ${C_MENU}Browse Scripts Repo
-\t\t\t${C_NUM}[13] ${C_MENU}Switch Toolchain
+\t\t\t${C_NUM}[14] ${C_MENU}Switch Toolchain
  ${C_NUM}[X|ENTER] ${C_RED}EXIT
 ${C_MENU}-------------------------------------------------------------
 ${C_RED}Pick an option from the menu: ${C_NORMAL}
@@ -555,12 +555,12 @@ while true; do
    c7|C7) tCleanBuild=1 && go compile_ovmfpkg;;
        8) go compile_buildtools;;
    c8|C8) tCleanBuild=1 && go compile_buildtools;;
-       8) go copy_binary;;
-       9) go open_build_dir;;
-      10) go build_pkg;;
-      11) go update_scripts;;
-      12) go browse_scripts_repo;;
-      13) go switch_toolchain;;
+       9) go copy_binary;;
+      10) go open_build_dir;;
+      11) go build_pkg;;
+      12) go update_scripts;;
+      13) go browse_scripts_repo;;
+      14) go switch_toolchain;;
     [xX]) break 1;;
        *) [[ -z $opt ]] && exit || go;; #"${0}"
   esac
