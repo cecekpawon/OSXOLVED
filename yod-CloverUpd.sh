@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=2.3
+gVer=2.4
 gTITLE="Clover Build Command v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -54,7 +54,7 @@ gToolchain="GCC5"
 
 ## ARCH & Build
 
-gArch="X64" # / IA32
+gArch="X64" # IA32 / X64
 gBuildTarget="RELEASE" # / DEBUG
 
 ## Export custom PATH
@@ -108,12 +108,13 @@ dCloverCopyTarget="/Volumes/XDATA/QVM/DISK/EFI"
 
 ## ShellPkg
 gEdk2ShellPkgArgs=
+gEdk2ShellPkgdCopyTarget="${dCloverCopyTarget}/CLOVER/tools"
 
 ## OvmfPkg
 gEdk2OvmfPkgArgs="-D SECURE_BOOT_ENABLE=TRUE" # -D DEBUG_ON_SERIAL_PORT -D SMM_REQUIRE=TRUE"
 
 # DIR for post Ovmf compile action.
-gEdk2OvmfPkdCopyTarget="/Volumes/XDATA/QVM/BIOS/"
+gEdk2OvmfPkgdCopyTarget="/Volumes/XDATA/QVM/BIOS/"
 
 ## END:   user define //<--
 ###########################
@@ -396,12 +397,12 @@ compile_clover() {
 }
 
 compile_shellpkg() {
-  dBuild="${dEdk2}/Build/Shell/${gBuildTarget}_${gToolchain}"
+  dShellBuild="${dEdk2}/Build/Shell/${gBuildTarget}_${gToolchain}"
 
   if [[ $gCleanBuild -eq 1 || $tCleanBuild -eq 1 ]]; then
     log "Clean EDK2 ShellPkg Build Directory"
 
-    [[ -d "${dBuild}" ]] && rm -rf "${dBuild}"
+    [[ -d "${dShellBuild}" ]] && rm -rf "${dShellBuild}"
   fi
 
   tCleanBuild=0
@@ -414,6 +415,8 @@ compile_shellpkg() {
     run_fix
     build -p "${fDsc}" ${gGenArgs} -t ${gToolchain} ${gEdk2ShellPkgArgs}
   fi
+
+  [[ -f "${dShellBuild}/${gArch}/Shell.efi" && -d "${gEdk2ShellPkgdCopyTarget}" ]] && cp "${dShellBuild}/${gArch}/Shell.efi" "${gEdk2ShellPkgdCopyTarget}"
 }
 
 compile_ovmfpkg() {
@@ -422,12 +425,12 @@ compile_ovmfpkg() {
     return
   fi
 
-  dBuild="${dEdk2}/Build/Ovmf${gArch}/${gBuildTarget}_${gToolchain}"
+  dOvmfBuild="${dEdk2}/Build/Ovmf${gArch}/${gBuildTarget}_${gToolchain}"
 
   if [[ $gCleanBuild -eq 1 || $tCleanBuild -eq 1 ]]; then
     log "Clean EDK2 OvmfPkg Build Directory"
 
-    [[ -d "${dBuild}" ]] && rm -rf "${dBuild}"
+    [[ -d "${dOvmfBuild}" ]] && rm -rf "${dOvmfBuild}"
   fi
 
   tCleanBuild=0
@@ -441,17 +444,19 @@ compile_ovmfpkg() {
     build -p "${fDsc}" ${gGenArgs} -t ${gToolchain} ${gEdk2OvmfPkgArgs}
   fi
 
-  [[ -f "${dBuild}/FV/OVMF.fd" && -d "${gEdk2OvmfPkdCopyTarget}" ]] && cp "${dBuild}/FV/OVMF.fd" "${gEdk2OvmfPkdCopyTarget}"
+  [[ -f "${dOvmfBuild}/FV/OVMF.fd" && -d "${gEdk2OvmfPkgdCopyTarget}" ]] && cp "${dOvmfBuild}/FV/OVMF.fd" "${gEdk2OvmfPkgdCopyTarget}"
 }
 
 switch_toolchain() {
   i=0
   mtc=""
+
   for tc in "${gToolchains[@]}"
   do
     ((i=i+1))
     mtc="`printf "${mtc}${C_NUM}[$i] ${C_MENU}${tc}"`\n"
   done
+
   mtc="`printf "${mtc}${C_NORMAL}Choose Toolchain:"`"
 
   read -p "$(printf "$mtc") " stc
