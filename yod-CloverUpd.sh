@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=2.4
+gVer=2.5
 gTITLE="Clover Build Command v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -444,6 +444,7 @@ compile_ovmfpkg() {
     build -p "${fDsc}" ${gGenArgs} -t ${gToolchain} ${gEdk2OvmfPkgArgs}
   fi
 
+  [[ -f "${dOvmfBuild}/${gArch}/Shell.efi" && -d "${gEdk2ShellPkgdCopyTarget}" ]] && cp "${dOvmfBuild}/${gArch}/Shell.efi" "${gEdk2ShellPkgdCopyTarget}"
   [[ -f "${dOvmfBuild}/FV/OVMF.fd" && -d "${gEdk2OvmfPkgdCopyTarget}" ]] && cp "${dOvmfBuild}/FV/OVMF.fd" "${gEdk2OvmfPkgdCopyTarget}"
 }
 
