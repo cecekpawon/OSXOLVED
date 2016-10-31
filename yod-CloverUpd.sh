@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=2.5
+gVer=2.6
 gTITLE="Clover Build Command v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -77,6 +77,7 @@ uCloverCommits="${uClover}/commit_browser"
 gEdk2Patch=0      # Apply Clover EDK2 Patches
 gCleanBuild=0     # Clean up build DIR 1st before compile
 gDirectBuild=1    # Compile Clover via ebuild.sh (Wrap) / EDK2 'build' (Direct)
+##
 gCloverLog="${dClover}/clover.log"
 gCloverRevision="0000"
 gCloverVersion_h="${dClover}/Version.h"
@@ -193,10 +194,17 @@ boot() {
   [[ -e "${CUSTOM_CONF_PATH}/target.txt" ]] && export CONF_PATH=${CUSTOM_CONF_PATH:-}
 
   case "${gToolchain}" in
+    GCC49|GCC5)
+        gMake=$(which make)
+        gGNUmake="${GCC5_BIN}make"
+        if [[ -x "${gMake}" && ! -x "${gGNUmake}" ]]; then
+          ln -s "${gMake}" "${gGNUmake}"
+        fi
+      ;;
     XCLANG|LLVM)
         dLlvmBin="/usr/bin"
         dLlvmCloverBin="${dSrc}/llvm-build/Release/bin"
-        if [[ ! -x "${dLlvmCloverBin}/clang" && -x  "${dLlvmBin}/clang" ]]; then
+        if [[ ! -x "${dLlvmCloverBin}/clang" && -x "${dLlvmBin}/clang" ]]; then
           mkdir -p "${dLlvmCloverBin}"
           ln -s "${dLlvmBin}/clang" "${dLlvmCloverBin}/clang"
         fi
@@ -266,8 +274,11 @@ compile_buildtools() {
 compile_gcc() {
   log "Compile GCC (Need Commandlinetools xCode)"
 
-  if [[ -d "${dClover}" && -f "${dClover}/buildgcc-${gGCCVer}.sh" ]]; then
-    cd "${dClover}" && ./buildgcc-$gGCCVer.sh && ./buildnasm.sh && ./buildgettext.sh
+  if [[ -f "${dClover}/buildgcc-${gGCCVer}.sh" ]]; then
+    read -p "Are you sure to (re)compile GCC? [yY] " gChoose
+    case "${gChoose}" in
+      [yY]) cd "${dClover}" && ./buildgcc-$gGCCVer.sh && ./buildnasm.sh && ./buildgettext.sh;;
+    esac
   else
     log "No EDK2 / Clover sources. Start cloning"
     update_clover
@@ -278,21 +289,33 @@ compile_gcc() {
 update_edk2() {
   log "Update EDK2"
 
-  #svn co "${uEdk2}" "${dEdk2}"
-  cd "${dEdk2}" && svn up
+  if [[ -f "${dEdk2}/edksetup.sh" ]]; then
+    cd "${dEdk2}" && svn up
+  else
+    svn co "${uEdk2}" "${dEdk2}"
+  fi
 }
 
 update_clover() {
-  if [[ -f "${dEdk2}/edksetup.sh" ]]; then
-    log "Update Clover"
+  if [[ ! -f "${dClover}/upd_locked" ]]; then
+    if [[ -f "${dEdk2}/edksetup.sh" ]]; then
+      log "Update Clover"
 
-    svn co "${uClover}" "${dClover}"
-    run_fix
+      if [[ -f "${dClover}/ebuild.sh" ]]; then
+        cd "${dClover}" && svn up
+      else
+        svn co "${uClover}" "${dClover}"
+      fi
+
+      run_fix
+    else
+      log "No EDK2 sources. Start cloning"
+
+      update_edk2
+      update_clover
+    fi
   else
-    log "No EDK2 sources. Start cloning"
-
-    update_edk2
-    update_clover
+    log "'upd_locked' exist, prevent updating"
   fi
 }
 
@@ -335,7 +358,7 @@ post_compile() {
   fi
 
   if [[ ! -d "${dCloverCopyTarget}" ]]; then
-    read -p "Cannot copy binary :((((("
+    echo "Cannot copy binary :((((("
   else
     copy_binary
   fi
