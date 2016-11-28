@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=2.6
+gVer=2.7
 gTITLE="Clover Build Command v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -78,7 +78,10 @@ gEdk2Patch=0      # Apply Clover EDK2 Patches
 gCleanBuild=0     # Clean up build DIR 1st before compile
 gDirectBuild=1    # Compile Clover via ebuild.sh (Wrap) / EDK2 'build' (Direct)
 ##
+gRevTxt="rev.txt"
+gEdk2Revision="0000"
 gCloverLog="${dClover}/clover.log"
+gCloverVersion="2.3k"
 gCloverRevision="0000"
 gCloverVersion_h="${dClover}/Version.h"
 dEdk2Buildtools="${dEdk2}/BaseTools/Source/C"
@@ -286,6 +289,22 @@ compile_gcc() {
   fi
 }
 
+get_rev() {
+  [[ ! -d "${1}" ]] && return
+
+  ret="0000"
+
+  cd "${1}"
+
+  if [[ -d .svn ]]; then
+    ret="$(svnversion -n | tr -d [:alpha:])"
+  elif [[ -d .git ]]; then
+    ret="$(git svn find-rev git-svn | tr -cd [:digit:])"
+  fi
+
+  echo $ret
+}
+
 update_edk2() {
   log "Update EDK2"
 
@@ -294,6 +313,9 @@ update_edk2() {
   else
     svn co "${uEdk2}" "${dEdk2}"
   fi
+
+  gEdk2Revision=$(get_rev ${dEdk2})
+  echo $gEdk2Revision > "${dEdk2}/${gRevTxt}"
 }
 
 update_clover() {
@@ -399,12 +421,24 @@ compile_clover() {
     if [[ $gDirectBuild -eq 1 ]]; then
       # Gen Version.h
       gCloverCmd="build -p ${fCheck} ${gGenArgs} -t ${gToolchain} ${gCloverArgs}"
+      for c in $gCloverCmd
+      do
+        gCloverCmdStr="${gCloverCmdStr} ${c##*/}"
+      done
+      read -rd '' gCloverCmdStr <<< "${gCloverCmdStr}"
       gDate=$(date '+%Y-%m-%d %H:%M:%S')
-      echo "#define FIRMWARE_VERSION \"2.31\"" > "${gCloverVersion_h}"
-      echo "#define FIRMWARE_BUILDDATE \"${gDate}\"" >> "${gCloverVersion_h}"
-      echo "#define FIRMWARE_REVISION L\"${gCloverRevision}\"" >> "${gCloverVersion_h}"
+      [[ -f "${dEdk2}/${gRevTxt}" ]] && gEdk2Revision=`cat "${dEdk2}/${gRevTxt}"`
+      echo "#define EDK2_REVISION \"${gEdk2Revision}\"" > "${gCloverVersion_h}"
+      echo "#define CLOVER_VERSION \"${gCloverVersion}\"" >> "${gCloverVersion_h}"
+      echo "#define CLOVER_BUILDDATE \"${gDate}\"" >> "${gCloverVersion_h}"
+      echo "#define CLOVER_REVISION \"${gCloverRevision}\"" >> "${gCloverVersion_h}"
+      echo "#define CLOVER_BUILDINFOS_STR \"${gCloverCmdStr}\"" >> "${gCloverVersion_h}"
+      # Original vars, backwards compatibility
+      echo "#define FIRMWARE_VERSION CLOVER_VERSION" >> "${gCloverVersion_h}"
+      echo "#define FIRMWARE_BUILDDATE CLOVER_BUILDDATE" >> "${gCloverVersion_h}"
+      echo "#define FIRMWARE_REVISION CLOVER_REVISION" >> "${gCloverVersion_h}"
       echo "#define REVISION_STR \"Clover revision: ${gCloverRevision}\"" >> "${gCloverVersion_h}"
-      echo "#define BUILDINFOS_STR \"${gCloverCmd}\"" >> "${gCloverVersion_h}"
+      echo "#define BUILDINFOS_STR CLOVER_BUILDINFOS_STR" >> "${gCloverVersion_h}"
       eval "${gCloverCmd}"
       gBuildError=`echo $?`
     else
