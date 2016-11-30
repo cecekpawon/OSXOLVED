@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=2.7
+gVer=2.8
 gTITLE="Clover Build Command v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -421,6 +421,7 @@ compile_clover() {
     if [[ $gDirectBuild -eq 1 ]]; then
       # Gen Version.h
       gCloverCmd="build -p ${fCheck} ${gGenArgs} -t ${gToolchain} ${gCloverArgs}"
+      gCloverCmdStr=""
       for c in $gCloverCmd
       do
         gCloverCmdStr="${gCloverCmdStr} ${c##*/}"
