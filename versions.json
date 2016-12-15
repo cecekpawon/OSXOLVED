@@ -1,6 +1,6 @@
 {
   "yod-CloverUpd.sh": "2.8",
-  "yod-GPUFramebuffers.php": "1.4",
+  "yod-GPUFramebuffers.php": "1.5",
   "yod-GenWebdriver.sh": "1.0",
   "yod-GetFakeSMC.sh": "1.0",
   "yod-HDAVerbsAnalyzer.php": "1.0",
@@ -12,6 +12,6 @@
   "yod-IoreXtripper.php": "1.1",
   "yod-GenAppleALC.sh": "1.0",
   "yod-KextToFfs.sh": "1.0",
-  "yod-OpenGate.sh": "1.0",
+  "yod-OpenGate.sh": "1.1",
   "yod-IconCache.sh": "1.0"
 }

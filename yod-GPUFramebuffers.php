@@ -5,7 +5,7 @@
 # @cecekpawon 10/20/2015 00:26 AM
 # thrsh.net
 
-$gVer = "1.4";
+$gVer = "1.5";
 $gTITLE = "GPUFramebuffers v{$gVer}";
 $gUname = "cecekpawon";
 $gME = "@{$gUname} | thrsh.net";
@@ -205,7 +205,7 @@ foreach ($c as $k => $v) {
 
     switch ($i) {
       case 0:
-        $s = substr($v,  0, 8); $x[] = "Platform-ID: " . $s; $t[] = sprintf("ig-platform-id: %s\n",  flip($s));
+        $s = substr($v,  0, 8); $x[] = "Platform-ID: " . $s; $t[] = sprintf("ig-platform-id: 0x%s (%d)\n",  flip($s), hexdec(flip($s)));
         $s = substr($v, 10, 2); $x[] = "Port: " . $s;
         //$s = substr($v, 12, 2); $x[] = "Pipes: " . $s;
         $s = substr($v, 14, 2); $x[] = "*FBMem: " . $s;
@@ -229,7 +229,7 @@ foreach ($c as $k => $v) {
         $ConnType=substr($l, 8, 8);
 
         if (array_key_exists($ConnType,  $ctype)) {
-          $s = substr($l, 0, 2); $x[] = "Index: " . $s;
+          $s = substr($l, 0, 2); if ($s == 0) continue; $x[] = "Index: " . $s;
           $s = substr($l, 2, 2); $x[] = "Port: " . $s;
           $s = substr($l, 4, 2); $x[] = "*Pipe: " . $s;
           //$s=$s2=substr($l, 8, 8); $x[]="ConnType: " . $s;
