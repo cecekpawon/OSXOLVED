@@ -73,7 +73,7 @@ device - 0x1c
 
 */
 
-$gVer = "1.4";
+$gVer = "1.5";
 $gTITLE = "PHP gfxutil v{$gVer}";
 $gUname = "cecekpawon";
 $gME = "@{$gUname} | thrsh.net";
@@ -274,7 +274,7 @@ function parse_args() {
     foreach ($argv as $arg) {
       if (!preg_match("/\./", $arg)) continue;
 
-      if (!isset($settings->ifile) && is_writable($arg) && ((int) @filesize($arg))) {
+      if (($reg === FALSE) && !isset($settings->ifile) && is_writable($arg) && ((int) @filesize($arg))) {
         $settings->ifile = $arg;
         continue;
       }
@@ -328,7 +328,13 @@ function is_vchar($s) {
 }
 
 function is_ascii($s) {
-  return (bool) !preg_match( '/[\x80-\xFF]/' , $s);
+  return (bool) !preg_match( '/[\x80-\xFF]/', $s);
+}
+
+function getprintable($s) {
+  //return preg_replace('/[^\p{L}\s]/u', '', $s);
+  //return preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $s);
+  return trim($s);
 }
 
 function nopadd($s) {
@@ -463,7 +469,7 @@ function devpath2hex($s, &$gfx_blockheader) {
   }
 }
 
-function indent($isNode, $serviceDepth, $stackOfBits) {
+function indent($isNode, $serviceDepth, $stackOfBits, $nl=false) {
   // stackOfBits representation, given current zero-based depth is n:
   //   bit n+1             = does depth n have children?       1=yes, 0=no
   //   bit [n, .. i .., 0] = does depth i have more siblings?  1=yes, 0=no
@@ -474,7 +480,9 @@ function indent($isNode, $serviceDepth, $stackOfBits) {
 
   $e = <<<YODA
     for (\$index = 0; \$index $op \$serviceDepth; \$index++) {
-      printf( (\$stackOfBits & (1 << \$index)) ? "| " : "  " );
+      \$l = (\$stackOfBits & (1 << \$index)) ? "| " : "  ";
+      if (\$nl) \$l = trim(\$l);
+      printf(\$l);
     }
     $n
 YODA;
@@ -731,7 +739,7 @@ function ReadBinary() {
 
     $gfx->blocks[$i] = $gfx_blockheader;
 
-    for($y=1; $y <= $gfx_blockheader->records; $y++) {
+    for ($y=1; $y <= $gfx_blockheader->records; $y++) {
       $length = readint($bp, $index, 4);
       $length -= 4; $index += 4; $size -= 4;
       readbin($bp, $size, $index, $length, $bin);
@@ -741,7 +749,7 @@ function ReadBinary() {
       }
 
       if (uni2str($key, $str, $str_len)) {
-        $key = $str;
+        $key = getprintable($str);
       } else {
         error("ReadBinary: string conversion");
       }
@@ -750,6 +758,7 @@ function ReadBinary() {
       $length -= 4; $index += 4; $size -=4;
       readbin($bp, $size, $index, $length, $val);
 
+      // TODO: force data type for empty value
       if (!$val) {
         error("ReadBinary: empty val (length)");
       }
@@ -829,7 +838,7 @@ function print_gfx($gfx) {
     $tmp = $gfx_blockheader->devpathstr_pci ? $gfx_blockheader->devpathstr_pci : "???";
 
     if ($settings->verbose) {
-      indent(false, 0, $bit);
+      indent(false, 0, $bit, true);
       printf("\n");
 
       $bit = ($count-1) ? 1 : 0;

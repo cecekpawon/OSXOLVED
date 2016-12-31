@@ -4,7 +4,7 @@
 # @cecekpawon Sat Jun 18 13:31:35 2016 WIB
 # thrsh.net
 
-gVer=1.0
+gVer=1.1
 gTITLE="OpenGate v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -69,7 +69,7 @@ valid() {
 
 main() {
   printf "${gHEAD}"
-  
+
   gArgs=("$@")
 
   if [[ "$#" -lt 1 ]]; then
@@ -78,19 +78,26 @@ main() {
   fi
 
   i=0
+  app=""
 
   for arg in "${gArgs[@]}"
   do
     if valid "${arg}"; then
       xattr -d -r com.apple.quarantine "${arg}"
       let i++
+      [[ $i -eq 1 ]] && app="${arg}"
     fi
   done
 
   if [[ $i -eq 0 ]]; then
     echo "No valid app(s) to gate free"
+  elif [[ $i -eq 1 && ! -z "${app}" ]]; then
+    read -p "Launch this app [yY]? " gChoose
+    case "${gChoose}" in
+      [yY]) open "${app}";;
+    esac
   else
-    echo "Operation done, relaunch app(s)"
+    echo "Operation done"
   fi
 }
 

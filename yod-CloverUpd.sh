@@ -4,7 +4,7 @@
 # @cecekpawon 10/10/2015 23:52 PM
 # thrsh.net
 
-gVer=2.8
+gVer=2.9
 gTITLE="Clover Build Command v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -39,7 +39,9 @@ dToolchainDir="${dSrc}/opt/local"
 
 ## Toolchain
 
-export GCC5_BIN="${dToolchainDir}/cross/bin/x86_64-clover-linux-gnu-"
+GCC_BIN="${dToolchainDir}/cross/bin/x86_64-clover-linux-gnu-"
+export GCC49_BIN="${GCC_BIN}"
+export GCC5_BIN="${GCC_BIN}"
 export NASM_PREFIX="${dToolchainDir}/bin/"
 export CLANG_BIN="${dSrc}/llvm-build/Release/bin/"
 export LLVM_BIN="${dSrc}/llvm-build/Release/bin/"
@@ -78,11 +80,13 @@ gEdk2Patch=0      # Apply Clover EDK2 Patches
 gCleanBuild=0     # Clean up build DIR 1st before compile
 gDirectBuild=1    # Compile Clover via ebuild.sh (Wrap) / EDK2 'build' (Direct)
 ##
+gCloverSuffix="X64"
+gDefRevision="0000"
 gRevTxt="rev.txt"
-gEdk2Revision="0000"
+gEdk2Revision=$gDefRevision
 gCloverLog="${dClover}/clover.log"
 gCloverVersion="2.3k"
-gCloverRevision="0000"
+gCloverRevision=$gDefRevision
 gCloverVersion_h="${dClover}/Version.h"
 dEdk2Buildtools="${dEdk2}/BaseTools/Source/C"
 
@@ -118,7 +122,7 @@ gEdk2ShellPkgdCopyTarget="${dCloverCopyTarget}/CLOVER/tools"
 gEdk2OvmfPkgArgs="-D SECURE_BOOT_ENABLE=TRUE" # -D DEBUG_ON_SERIAL_PORT -D SMM_REQUIRE=TRUE"
 
 # DIR for post Ovmf compile action.
-gEdk2OvmfPkgdCopyTarget="/Volumes/XDATA/QVM/BIOS/"
+gEdk2OvmfPkgdCopyTarget="/Volumes/XDATA/QVM/BIN/"
 
 ## END:   user define //<--
 ###########################
@@ -159,12 +163,13 @@ ${C_MENU}-------------------------------------------------------------
 \t\t\t ${C_NUM}[6] ${C_MENU}Compile ShellPkg\t\t/ ${C_NUM}[c6]: ${C_MENU}CLEAN_BUILD
 \t\t\t ${C_NUM}[7] ${C_MENU}Compile OvmfPkg\t\t/ ${C_NUM}[c7]: ${C_MENU}CLEAN_BUILD
 \t\t\t ${C_NUM}[8] ${C_MENU}Compile Buildtools\t/ ${C_NUM}[c8]: ${C_MENU}CLEAN_BUILD
-\t\t\t ${C_NUM}[9] ${C_MENU}Copy Binary
-\t\t\t${C_NUM}[10] ${C_MENU}Open Build Directory
-\t\t\t${C_NUM}[11] ${C_MENU}Build PKG Installer
-\t\t\t${C_NUM}[12] ${C_MENU}Update Scripts
-\t\t\t${C_NUM}[13] ${C_MENU}Browse Scripts Repo
-\t\t\t${C_NUM}[14] ${C_MENU}Switch Toolchain
+\t\t\t ${C_NUM}[9] ${C_MENU}Compile Custom Pkg
+\t\t\t${C_NUM}[10] ${C_MENU}Copy Binary
+\t\t\t${C_NUM}[11] ${C_MENU}Open Build Directory
+\t\t\t${C_NUM}[12] ${C_MENU}Build PKG Installer
+\t\t\t${C_NUM}[13] ${C_MENU}Update Script
+\t\t\t${C_NUM}[14] ${C_MENU}Browse Script Repo
+\t\t\t${C_NUM}[15] ${C_MENU}Switch Toolchain
  ${C_NUM}[X|ENTER] ${C_RED}EXIT
 ${C_MENU}-------------------------------------------------------------
 ${C_RED}Pick an option from the menu: ${C_NORMAL}
@@ -227,11 +232,21 @@ boot() {
   fi
 
   if [[ ! $vCloverSrc =~ ^[0-9]+$ ]]; then
-    vCloverSrc="${C_PURPLE}Undetected"
-    C_HI=$C_RED
-  elif [[ $vCloverSVN -gt $vCloverSrc ]]; then
+    #vCloverSrc="${C_PURPLE}Undetected"
+    #C_HI=$C_RED
+    vCloverSrc=0
+  fi
+
+  if [[ $vCloverSVN -gt $vCloverSrc ]]; then
     C_HI=$C_RED
   fi
+
+  if [[ -z $vCloverSrc ]]; then
+    vCloverSrc="${C_PURPLE}Undetected"
+  fi
+
+  gCloverRevision=$vCloverSrc
+  echo $gCloverRevision > "${dClover}/${gRevTxt}"
 
   #CloverUpdaterUtility
   vCloverBoot=$(LC_ALL=C ioreg -l -pIODeviceTree | \
@@ -297,7 +312,8 @@ get_rev() {
   cd "${1}"
 
   if [[ -d .svn ]]; then
-    ret="$(svnversion -n | tr -d [:alpha:])"
+    #ret="$(svnversion -n | tr -d [:alpha:])"
+    ret="$(svn info 2>&1 | grep Revision | cut -c11-)"
   elif [[ -d .git ]]; then
     ret="$(git svn find-rev git-svn | tr -cd [:digit:])"
   fi
@@ -339,6 +355,9 @@ update_clover() {
   else
     log "'upd_locked' exist, prevent updating"
   fi
+
+  gCloverRevision=$(get_rev ${dClover})
+  echo $gCloverRevision > "${dClover}/${gRevTxt}"
 }
 
 browse_clover_commits() {
@@ -428,7 +447,11 @@ compile_clover() {
       done
       read -rd '' gCloverCmdStr <<< "${gCloverCmdStr}"
       gDate=$(date '+%Y-%m-%d %H:%M:%S')
-      [[ -f "${dEdk2}/${gRevTxt}" ]] && gEdk2Revision=`cat "${dEdk2}/${gRevTxt}"`
+      [[ -f "${dClover}/${gRevTxt}" ]] && gCloverRevision=`cat "${dClover}/${gRevTxt}" | sed -e 's/[^0-9\.]//g'`
+      [[ ! $gCloverRevision =~ ^[0-9]+$ ]] && gCloverRevision=$gDefRevision
+      gCloverRevision="${gCloverRevision}${gCloverSuffix}"
+      [[ -f "${dEdk2}/${gRevTxt}" ]] && gEdk2Revision=`cat "${dEdk2}/${gRevTxt}" | sed -e 's/[^0-9\.]//g'`
+      [[ ! $gEdk2Revision =~ ^[0-9]+$ ]] && gEdk2Revision=$gDefRevision
       echo "#define EDK2_REVISION \"${gEdk2Revision}\"" > "${gCloverVersion_h}"
       echo "#define CLOVER_VERSION \"${gCloverVersion}\"" >> "${gCloverVersion_h}"
       echo "#define CLOVER_BUILDDATE \"${gDate}\"" >> "${gCloverVersion_h}"
@@ -475,6 +498,17 @@ compile_shellpkg() {
   fi
 
   [[ -f "${dShellBuild}/${gArch}/Shell.efi" && -d "${gEdk2ShellPkgdCopyTarget}" ]] && cp "${dShellBuild}/${gArch}/Shell.efi" "${gEdk2ShellPkgdCopyTarget}"
+}
+
+compile_custom() {
+  read -p "Enter full dsc path, with args (optional): " fDsc
+
+  log "Compile Custom: ${fDsc}"
+
+  if [[ -f "${fDsc}" ]]; then
+    run_fix
+    build -p "${fDsc}" ${gGenArgs} -t ${gToolchain}
+  fi
 }
 
 compile_ovmfpkg() {
@@ -533,9 +567,11 @@ copy_binary() {
   iArch=`echo ${gArch} | sed 's/[^3264]//g'`
 
   if [[ -d "${dCloverCopyTarget}" && ${#gCloverDrivers[@]} -ne 0 ]]; then
+    dDir="${dCloverCopyTarget}/CLOVER/drivers"
+    [[ ! -d "${dDir}" ]] && dDir="${dDir}${iArch}UEFI"
     for drv in "${gCloverDrivers[@]}"
     do
-      [[ -f "${dBuild}/${gArch}/${drv}.efi" ]] && cp "${dBuild}/${gArch}/${drv}.efi" "${dCloverCopyTarget}/CLOVER/drivers${iArch}UEFI/${drv}-${iArch}.efi"
+      [[ -f "${dBuild}/${gArch}/${drv}.efi" ]] && cp "${dBuild}/${gArch}/${drv}.efi" "${dDir}/${drv}-${iArch}.efi"
     done
   fi
 
@@ -619,12 +655,13 @@ while true; do
    c7|C7) tCleanBuild=1 && go compile_ovmfpkg;;
        8) go compile_buildtools;;
    c8|C8) tCleanBuild=1 && go compile_buildtools;;
-       9) go copy_binary;;
-      10) go open_build_dir;;
-      11) go build_pkg;;
-      12) go update_scripts;;
-      13) go browse_scripts_repo;;
-      14) go switch_toolchain;;
+       9) go compile_custom;;
+      10) go copy_binary;;
+      11) go open_build_dir;;
+      12) go build_pkg;;
+      13) go update_scripts;;
+      14) go browse_scripts_repo;;
+      15) go switch_toolchain;;
     [xX]) break 1;;
        *) [[ -z $opt ]] && exit || go;; #"${0}"
   esac
