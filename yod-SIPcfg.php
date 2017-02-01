@@ -5,7 +5,7 @@
 # @cecekpawon 09/30/2015 14:36 PM
 # thrsh.net
 
-$gVer="1.2";
+$gVer="1.3";
 $gTITLE="SIP Cfg v{$gVer}";
 $gUname="cecekpawon";
 $gME="@{$gUname} | thrsh.net";
@@ -29,7 +29,8 @@ $FLAGS = array(
     "CSR_ALLOW_APPLE_INTERNAL"          => (1 << 4), // 16
     "CSR_ALLOW_UNRESTRICTED_DTRACE"     => (1 << 5), // 32
     "CSR_ALLOW_UNRESTRICTED_NVRAM"      => (1 << 6), // 64
-    "CSR_ALLOW_DEVICE_CONFIGURATION"    => (1 << 7)  // 128
+    "CSR_ALLOW_DEVICE_CONFIGURATION"    => (1 << 7), // 128
+    "CSR_ALLOW_ANY_RECOVERY_OS"         => (1 << 8)  // 256
   );
 
 $BOOTERFLAGS = array(
@@ -37,12 +38,12 @@ $BOOTERFLAGS = array(
     "kBootArgsFlagHiDPI"                => (1 << 1), // 2
     "kBootArgsFlagBlack"                => (1 << 2), // 4
     "kBootArgsFlagCSRActiveConfig"      => (1 << 3), // 8
-    "kBootArgsFlagCSRPendingConfig"     => (1 << 4), // 16
+    "kBootArgsFlagCSRConfigMode"        => (1 << 4), // 16
     "kBootArgsFlagCSRBoot"              => (1 << 5), // 32
     "kBootArgsFlagBlackBg"              => (1 << 6), // 64
-    "kBootArgsFlagLoginUI"              => (1 << 7)  // 128
+    "kBootArgsFlagLoginUI"              => (1 << 7), // 128
+    "kBootArgsFlagInstallUI"            => (1 << 8)  // 256
   );
-
 
 $gHEAD = <<<YODA
 \e[34m======================================================================
@@ -88,6 +89,7 @@ function print_flags($i, $ret=false) {
 
   $a = array();
   $h = $t = "";
+  $c = count($FLAGS);
 
   foreach ($FLAGS as $k => $v) {
     $a[] = "{$k}: " . (($i & constant($k)) ? "\e[32menable \e[34m(1)\e[0m" : "\e[31mdisable \e[34m(0)\e[0m");
@@ -97,7 +99,7 @@ function print_flags($i, $ret=false) {
       "!Flag: \e[34m%d\e[0m | \e[34m0x%02x\e[0m | \e[34m(%s)\e[0m\n\n!%s",
       $i,
       $i,
-      sprintf("%08d", decbin($i)),
+      sprintf("%0{$c}d", decbin($i)),
       (implode("\n", $a) . "\n\n")
     );
 
