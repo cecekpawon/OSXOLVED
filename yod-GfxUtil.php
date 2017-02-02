@@ -73,7 +73,7 @@ device - 0x1c
 
 */
 
-$gVer = "1.5";
+$gVer = "1.6";
 $gTITLE = "PHP gfxutil v{$gVer}";
 $gUname = "cecekpawon";
 $gME = "@{$gUname} | thrsh.net";
@@ -892,7 +892,7 @@ function print_gfx($gfx) {
       }
 
       if ($settings->verbose) {
-        printf("\"%s\"=$b1%s$b2\n", $key, ($gfx_entry->val_type === DATA_BINARY) ? $val : strbin($val));
+        printf("\"%s\"=$b1%s$b2\n", $key, $val);
       }
 
       if ($settings->ofile_type === FILE_XML) {
