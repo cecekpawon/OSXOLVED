@@ -5,7 +5,7 @@
 # @cecekpawon 10/20/2015 00:26 AM
 # thrsh.net
 
-$gVer = "1.5";
+$gVer = "1.6";
 $gTITLE = "GPUFramebuffers v{$gVer}";
 $gUname = "cecekpawon";
 $gME = "@{$gUname} | thrsh.net";
@@ -37,7 +37,8 @@ $fb_a = array(
     "snb" => "AppleIntelSNBGraphicsFB",
     "capri" => "AppleIntelFramebufferCapri",
     "azul" => "AppleIntelFramebufferAzul",
-    "skylake" => "AppleIntelSKLGraphicsFramebuffer"
+    "bdw" => "AppleIntelBDWGraphicsFramebuffer",
+    "skl" => "AppleIntelSKLGraphicsFramebuffer"
   );
 
 $sle = "/System/Library/Extensions/%s.kext/Contents/MacOS/%s";
@@ -67,7 +68,8 @@ Ex:
   {$FNAME} --snb ( AppleIntelSNBGraphicsFB )
   {$FNAME} --capri ( AppleIntelFramebufferCapri )
   {$FNAME} --azul ( AppleIntelFramebufferAzul )
-  {$FNAME} --skylake ( AppleIntelSKLGraphicsFramebuffer )
+  {$FNAME} --bdw ( AppleIntelBDWGraphicsFramebuffer )
+  {$FNAME} --skl ( AppleIntelSKLGraphicsFramebuffer )
 Other:
   {$FNAME} --update ( Update scripts )
   {$FNAME} --help ( This texts )
@@ -139,7 +141,10 @@ function getbin($fb) {
       case "azul":
         $r = "0[0-8]{1}00[0-2]{1}[26e]{1}0[4acd]{1}0[0-9]{14}[24]{1}[a-f0-9]{192}";
         break;
-      case "skylake":
+      case "bdw":
+        $r = "0[0-8]{1}00[a-f0-9]{2}16[a-f0-9]{256}c800";
+        break;
+      case "skl":
         if ($gFBSierra) {
           $r = "[0-9]{4}[a-f0-9]{2}19[0-3]{8}([a-f0-9]{194})0000000[0-4]";
         } else {
@@ -179,9 +184,10 @@ $r = array();
 foreach ($c as $k => $v) {
   switch ($fb) {
     case "azul":
+    case "bdw":
       if ($gFBNew) $v = substr_replace($v, "", 96 , 8);//10.11.4
       break;
-    case "skylake":
+    case "skl":
       if ($gFBSierra) {
         if (!preg_match("#ff0000000#i", $v)) continue 2;
       } else {
