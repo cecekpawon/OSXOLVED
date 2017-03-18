@@ -5,7 +5,7 @@
 # @cecekpawon 10/20/2015 00:26 AM
 # thrsh.net
 
-$gVer = "1.6";
+$gVer = "1.7";
 $gTITLE = "GPUFramebuffers v{$gVer}";
 $gUname = "cecekpawon";
 $gME = "@{$gUname} | thrsh.net";
@@ -142,13 +142,12 @@ function getbin($fb) {
         $r = "0[0-8]{1}00[0-2]{1}[26e]{1}0[4acd]{1}0[0-9]{14}[24]{1}[a-f0-9]{192}";
         break;
       case "bdw":
-        $r = "0[0-8]{1}00[a-f0-9]{2}16[a-f0-9]{256}c800";
+        $r = "0[0-8]{1}00[a-f0-9]{2}16([a-f0-9]{254})00c8";
         break;
       case "skl":
         if ($gFBSierra) {
           $r = "[0-9]{4}[a-f0-9]{2}19[0-3]{8}([a-f0-9]{194})0000000[0-4]";
         } else {
-          //$r = "[0-3]{4}[a-f0-9]{2}19[0-3]{8}00000004[a-f0-9]{176}";
           $r = "[0-3]{4}[a-f0-9]{2}19[0-3]{8}([0-9]{24})?00000004[a-f0-9]{176}"; //10.11.4
         }
         break;
@@ -211,7 +210,7 @@ foreach ($c as $k => $v) {
 
     switch ($i) {
       case 0:
-        $s = substr($v,  0, 8); $x[] = "Platform-ID: " . $s; $t[] = sprintf("ig-platform-id: 0x%s (%d)\n",  flip($s), hexdec(flip($s)));
+        $s = substr($v,  0, 8); $x[] = "Platform-ID: " . $s; $t[] = sprintf("(( %d ))\n\nig-platform-id: 0x%s (%d)\n", $k + 1, flip($s), hexdec(flip($s)));
         $s = substr($v, 10, 2); $x[] = "Port: " . $s;
         //$s = substr($v, 12, 2); $x[] = "Pipes: " . $s;
         $s = substr($v, 14, 2); $x[] = "*FBMem: " . $s;
@@ -255,7 +254,7 @@ foreach ($c as $k => $v) {
     $t[] = $l;
   }
 
-  $r[] = implode("\n",$t);
+  $r[] = implode("\n", $t);
 }
 
 if (count($r)) die(implode("\n\n------------------------\n\n", $r) . "\n");
