@@ -73,7 +73,7 @@ device - 0x1c
 
 */
 
-$gVer = "1.6";
+$gVer = "1.7";
 $gTITLE = "PHP gfxutil v{$gVer}";
 $gUname = "cecekpawon";
 $gME = "@{$gUname} | thrsh.net";
@@ -209,13 +209,14 @@ function reset_settings() {
   $settings->verbose = FALSE;
   $settings->detect_strings = FALSE;
   $settings->detect_numbers = FALSE;
+  $settings->print = FALSE;
 }
 
 
 function parse_args() {
   global $settings, $argv, $BASE_VERSION, $gVer;
 
-  $args = getopt("uafdsnvhi:o:");
+  $args = getopt("uafdsnpvhi:o:");
 
   $reg = FALSE;
   foreach ($args as $k => $v) {
@@ -245,6 +246,9 @@ function parse_args() {
         break;
       case "n":
         $settings->detect_numbers = TRUE;
+        break;
+      case "p":
+        $settings->print = TRUE;
         break;
       case "i":
       case "o":
@@ -289,7 +293,7 @@ function parse_args() {
     $settings->ifile_type = FILE_REG;
   }
 
-  if ((($reg === FALSE) && !isset($settings->ifile)) || !isset($settings->ofile)) {
+  if ((($reg === FALSE) && !isset($settings->ifile)) || (!isset($settings->ofile) && !$settings->print)) {
     return void("usage", "Invalid in/out file");
   }
 
@@ -931,7 +935,9 @@ function print_gfx($gfx) {
       if ($settings->verbose) {
         printf("\n\n%s\n\n", $ret);
       }
-      $devprop_plist->save($settings->ofile);
+      if (!$settings->print) {
+        $devprop_plist->save($settings->ofile);
+      }
     }
   } else {
     $ret = "";
@@ -955,14 +961,21 @@ function print_gfx($gfx) {
     }
 
     if ($ret) {
+      $hex = $ret;
       if ($settings->ofile_type === FILE_BIN) {
         $ret = strbin($ret);
       }
-      if ($ret) @file_put_contents($settings->ofile, $ret);
+      if ($ret) {
+        if ($settings->print) {
+          printf("\n\n%s\n\n", $hex);
+        } else {
+          @file_put_contents($settings->ofile, $ret);
+        }
+      }
     }
   }
 
-  if (!$ret || !((int) @filesize($settings->ofile))) {
+  if (!$settings->print && (!$ret || !((int) @filesize($settings->ofile)))) {
     error("Create GFX");
   }
 }
