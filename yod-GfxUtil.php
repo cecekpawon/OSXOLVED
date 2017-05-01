@@ -73,7 +73,7 @@ device - 0x1c
 
 */
 
-$gVer = "1.7";
+$gVer = "1.8";
 $gTITLE = "PHP gfxutil v{$gVer}";
 $gUname = "cecekpawon";
 $gME = "@{$gUname} | thrsh.net";
@@ -95,8 +95,6 @@ This program comes with ABSOLUTELY NO WARRANTY. This is free software!
 $gTITLE : $gME
 ==========================================================================\n\n
 YODA;
-
-echo $gHEAD;
 
 function dump($value) {
   die(var_dump($value));
@@ -165,14 +163,14 @@ const FILE_HEX = 2;
 const FILE_XML = 3;
 const FILE_REG = 4;
 
-$settings = new stdClass;
-
 function usage($s = "") {
-/*
--f name\t\tfinds object devicepath with the given name from IODeviceTree plane
-*/
+  /*
+  -f name\t\tfinds object devicepath with the given name from IODeviceTree plane
+  */
+  $f = basename(__FILE__);
   $h = <<<YODA
 gfxutil: [command_option] [other_options] infile outfile
+./$f -fvsn devprop.plist > log.txt
 
 Command options are:
 -f\t\tgrab IODeviceTree/efi/device-properties as input
@@ -197,21 +195,23 @@ YODA;
   }
 
   printf($h);
-  reset_settings();
+  init();
 }
 
-function reset_settings() {
-  global $settings;
+function init() {
+  global $settings, $gfx;
 
-  $settings = new stdClass;
+  $settings = $gfx = new stdClass();
+
   /* set default value here */
   $settings->dump = FALSE;
   $settings->verbose = FALSE;
   $settings->detect_strings = FALSE;
   $settings->detect_numbers = FALSE;
   $settings->print = FALSE;
+  $settings->ifile_type = FILE_HEX;
+  $settings->ofile_type = FILE_XML;
 }
-
 
 function parse_args() {
   global $settings, $argv, $BASE_VERSION, $gVer;
@@ -297,7 +297,7 @@ function parse_args() {
     return void("usage", "Invalid in/out file");
   }
 
-  if (!isset($settings->ifile_type) || !isset($settings->ofile_type) || ($settings->ifile_type === $settings->ofile_type)) {
+  if (/*!isset($settings->ifile_type) || !isset($settings->ofile_type) ||*/ ($settings->ifile_type === $settings->ofile_type)) {
     return void("usage", "Invalid in/out format");
   }
 }
@@ -764,7 +764,7 @@ function ReadBinary() {
 
       // TODO: force data type for empty value
       if (!$val) {
-        error("ReadBinary: empty val (length)");
+        //error("ReadBinary: empty val (length)");
       }
 
       //read entries
@@ -818,8 +818,8 @@ function ReadBinary() {
   }
 }
 
-function print_gfx($gfx) {
-  global $settings, $devprop_plist;
+function print_gfx() {
+  global $settings, $gfx, $devprop_plist;
 
   if ($settings->verbose) {
     $bit = 0;
@@ -936,7 +936,7 @@ function print_gfx($gfx) {
         printf("\n\n%s\n\n", $ret);
       }
       if (!$settings->print) {
-        $devprop_plist->save($settings->ofile);
+        $devprop_plist->save($settings->ofile, LIBXML_NOEMPTYTAG);
       }
     }
   } else {
@@ -980,21 +980,35 @@ function print_gfx($gfx) {
   }
 }
 
-parse_args();
+function main() {
+  global $gHEAD, $settings, $gfx;
 
-switch ($settings->ifile_type) {
-  case FILE_REG:
-  case FILE_HEX:
-  case FILE_BIN:
-    ReadBinary();
-    break;
-  case FILE_XML:
-    ReadPlist();
-    break;
-  default:
-    break;
+  echo $gHEAD;
+
+  init();
+
+  parse_args();
+
+  switch ($settings->ifile_type) {
+    case FILE_REG:
+    case FILE_HEX:
+    case FILE_BIN:
+      ReadBinary();
+      break;
+    case FILE_XML:
+      ReadPlist();
+      break;
+    default:
+      break;
+  }
+
+  if (is_object($gfx) && (count(get_object_vars($gfx)) > 0)) {
+    print_gfx($gfx);
+
+    if ($settings->dump) dump($gfx);
+  } else {
+    error("while parsing");
+  }
 }
 
-print_gfx($gfx);
-
-if ($settings->dump) dump($gfx);
+main();
