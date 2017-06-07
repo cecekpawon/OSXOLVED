@@ -38,9 +38,11 @@ $fb_a = array(
     "capri" => "AppleIntelFramebufferCapri",
     "azul" => "AppleIntelFramebufferAzul",
     "bdw" => "AppleIntelBDWGraphicsFramebuffer",
-    "skl" => "AppleIntelSKLGraphicsFramebuffer"
+    "skl" => "AppleIntelSKLGraphicsFramebuffer",
+    "kbl" => "AppleIntelKBLGraphicsFramebuffer"
   );
 
+$sle = __DIR__ . "/%s";
 $sle = "/System/Library/Extensions/%s.kext/Contents/MacOS/%s";
 
 $gHEAD = <<<YODA
@@ -151,6 +153,10 @@ function getbin($fb) {
           $r = "[0-3]{4}[a-f0-9]{2}19[0-3]{8}([0-9]{24})?00000004[a-f0-9]{176}"; //10.11.4
         }
         break;
+
+      case "kbl":
+        $r = "[0-9]{4}[a-f0-9]{2}59[0-3]{8}([a-f0-9]{194})0000000[0-4]";
+        break;
       default:
         return;
     }
@@ -180,6 +186,8 @@ else {
 
 $r = array();
 
+$i2 = 0;
+
 foreach ($c as $k => $v) {
   switch ($fb) {
     case "azul":
@@ -194,6 +202,9 @@ foreach ($c as $k => $v) {
         $v = substr_replace($v, "", 96 , $gFBNew ? 16 : 8);
       }
       break;
+    case "kbl":
+      if (!preg_match("#ff0000000#i", $v)) continue 2;
+      break;
     default:
       break;
   }
@@ -201,7 +212,7 @@ foreach ($c as $k => $v) {
   $d = str_split($v, 24);
   $t = array();
 
-  $PlatformID="";
+  $PlatformID = "";
 
   foreach ($d as $i => $l) {
     if (strlen($l) < 24) continue;
@@ -210,7 +221,7 @@ foreach ($c as $k => $v) {
 
     switch ($i) {
       case 0:
-        $s = substr($v,  0, 8); $x[] = "Platform-ID: " . $s; $t[] = sprintf("(( %d ))\n\nig-platform-id: 0x%s (%d)\n", $k + 1, flip($s), hexdec(flip($s)));
+        $s = substr($v,  0, 8); $x[] = "Platform-ID: " . $s; $t[] = sprintf("(( %d ))\n\nig-platform-id: 0x%s (%d)\n", ++$i2, flip($s), hexdec(flip($s)));
         $s = substr($v, 10, 2); $x[] = "Port: " . $s;
         //$s = substr($v, 12, 2); $x[] = "Pipes: " . $s;
         $s = substr($v, 14, 2); $x[] = "*FBMem: " . $s;
