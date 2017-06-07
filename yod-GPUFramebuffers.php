@@ -5,7 +5,7 @@
 # @cecekpawon 10/20/2015 00:26 AM
 # thrsh.net
 
-$gVer = "1.7";
+$gVer = "1.8";
 $gTITLE = "GPUFramebuffers v{$gVer}";
 $gUname = "cecekpawon";
 $gME = "@{$gUname} | thrsh.net";
