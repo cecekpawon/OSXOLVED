@@ -461,7 +461,7 @@ function devpath2hex($s, &$gfx_blockheader) {
       foreach ($m[0] as $k) {
         preg_match("/0x([a-f0-9]+),0x([a-f0-9]+)/i", $k, $p);
         if (count($p) < 3) return;
-        $a[] = sprintf("01010600%02x%02x", $p[2], $p[1]);
+        $a[] = sprintf("01010600%02s%02s", $p[2], $p[1]);
       }
 
       $a[] = "7fff0400";
