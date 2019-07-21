@@ -46,7 +46,7 @@ __for educational purpose only__
 
 #### IoreXtripper
 
-> Strip your .ioreg ultra sensitive datas
+> Strip your .ioreg (made by IORegistryExplorer v2) ultra sensitive datas
 
 #### GenAppleALC
 

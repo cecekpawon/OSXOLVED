@@ -126,14 +126,15 @@ function parse_args() {
 }
 
 $a = array(
-  array("String", "IOPlatformSerialNumber"),
-  array("Data", "serial-number"),
-  array("String", "processor-memory-board-serial-number"),
-  array("Data", "SystemSerialNumber"),
-  array("String", "IOPlatformUUID"),
-  array("Data", "system-id"),
   array("Data", "dimm-part-number"),
   array("Data", "dimm-serial-number"),
+  array("Data", "serial-number"),
+  array("Data", "system-id"),
+  array("Data", "SystemSerialNumber"),
+
+  array("String", "IOPlatformSerialNumber"),
+  array("String", "IOPlatformUUID"),
+  array("String", "processor-memory-board-serial-number")
 );
 
 function strip_String($rgx,$m) {
@@ -170,10 +171,10 @@ function boot() {
 
     switch ($t) {
       case "String":
-        $v = "(>{$v}<.*?string>+)([^<]+)";
+        $v = "(key>{$v}<.*?string>+)([^<]+)";
         break;
       case "Data":
-        $v = "(>{$v}<.*?data>.*?)([a-z0-9\+\/\=]+)(.*?<\/data>+)";
+        $v = "(key>{$v}<.*?data>.*?)([a-z0-9\+\/\=]+)(.*?<\/data>+)";
         break;
       default:
         // TODO: custom pattern here, isset $k[2]
