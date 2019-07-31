@@ -4,7 +4,7 @@
 # @cecekpawon 04/29/2016 20:17 PM
 # thrsh.net
 
-$gVer = "1.1";
+$gVer = "1.2";
 $gTITLE = "IoreXtripper v{$gVer}";
 $gUname = "cecekpawon";
 $gME = "@{$gUname} | thrsh.net";

@@ -4,7 +4,7 @@
 # @cecekpawon 10/24/2015 14:13 PM
 # thrsh.net
 
-gVer=1.6
+gVer=1.7
 gTITLE="Mount EFI v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -12,10 +12,6 @@ gBase="OSXOLVED"
 gRepo="https://github.com/${gUname}/${gBase}"
 gRepoRAW="https://raw.githubusercontent.com/${gUname}/${gBase}/master"
 gScriptName=${0##*/}
-
-isdone() {
-  exit
-}
 
 C_MENU="\e[36m"
 C_BLUE="\e[38;5;27m"
@@ -35,11 +31,28 @@ ${C_MENU}\t\t: ${C_NUM}-u${C_MENU}] update-scripts
 ${C_MENU}--------------------------------------------
 ${C_MENU}Inspiration: Clover Configurator, #longlive!
 ${C_MENU}--------------------------------------------${C_BLACK}\n\n
-EOF`
+EOF
+`
 
-gMSG=`cat <<EOF
+gMsgError=`cat <<EOF
 Please die!\n
-EOF`
+EOF
+`
+
+gMsgStart=`cat <<EOF
+Getting EFI disks ..
+
+Choose one from available devices:
+[${C_BLUE}#${C_BLACK}] is current startup disk!
+
+------+-----------+--------------------------
+[#]\t| Partition\t| Label
+------+-----------+--------------------------\n
+EOF
+`
+
+## The user ID
+gID=$(id -u)
 
 gAuto=0
 gOpen=0
@@ -51,125 +64,132 @@ i=0
 
 tabs -6
 
-clear && printf "${gHEAD}"
+isdone() {
+  exit
+}
 
-aEFI=($(diskutil list | grep EFI | grep -o -e disk[[:digit:]]*s[[:digit:]]*))
-gEFITotal=${#aEFI[@]}
+function main() {
+  clear && printf "${gHEAD}"
 
-if [[ $gEFITotal -eq 0 ]]; then
-  echo "Zero EFI partition detected!"
-  isdone
-fi
+  aEFI=($(diskutil list | grep EFI | grep -o -e disk[[:digit:]]*s[[:digit:]]*))
+  gEFITotal=${#aEFI[@]}
 
-while getopts :aAuUoO gOpt; do
-  case "${gOpt}" in
-    [aA]) gAuto=1;;
-    [uU]) gUpdate=1;;
-    [oO]) gOpen=1;;
-  esac
-done
+  if [[ $gEFITotal -eq 0 ]]; then
+    echo "Zero EFI partition detected!"
+    isdone
+  fi
 
-if [[ $gUpdate -ne 0 ]]; then
-  echo "Looking for updates .."
+  while getopts :aAuUoO gOpt; do
+    case "${gOpt}" in
+      [aA]) gAuto=1;;
+      [uU]) gUpdate=1;;
+      [oO]) gOpen=1;;
+    esac
+  done
 
-  gTmp=$(curl -sS "${gRepoRAW}/versions.json" | awk '/'$gScriptName'/ {print $2}' | sed -e 's/[^0-9\.]//g')
+  if [[ $gUpdate -ne 0 ]]; then
+    echo "Looking for updates .."
 
-  if [[ $gTmp > $gVer ]]; then
-    echo "Update currently available (v${gTmp}) .."
+    gTmp=$(curl -sS "${gRepoRAW}/versions.json" | awk '/'$gScriptName'/ {print $2}' | sed -e 's/[^0-9\.]//g')
 
-    if [[ -w "${0}" ]]; then
-      gBkp="${0}.bak"
-      gTmp="${0}.tmp"
+    if [[ $gTmp > $gVer ]]; then
+      echo "Update currently available (v${gTmp}) .."
 
-      echo "Create script backup: ${gBkp}"
+      if [[ -w "${0}" ]]; then
+        gBkp="${0}.bak"
+        gTmp="${0}.tmp"
 
-      curl -sS "${gRepoRAW}/${gScriptName}" -o "${gTmp}"
-      gStr=`cat ${gTmp}`
+        echo "Create script backup: ${gBkp}"
 
-      if [[ "${gStr}" =~ "bash" ]]; then
-        echo "Update successfully :))"
+        curl -sS "${gRepoRAW}/${gScriptName}" -o "${gTmp}"
+        gStr=`cat ${gTmp}`
 
-        cp "${0}" "${gBkp}" && mv "${gTmp}" "${0}" && chmod +x "${0}"
+        if [[ "${gStr}" =~ "bash" ]]; then
+          echo "Update successfully :))"
 
-        read -p "Relaunch script now? [yY] " gChoose
-        case "${gChoose}" in
-          [yY]) exec "${0}" "${@}";;
-        esac
+          cp "${0}" "${gBkp}" && mv "${gTmp}" "${0}" && chmod +x "${0}"
 
-        isdone
+          read -p "Relaunch script now? [yY] " gChoose
+          case "${gChoose}" in
+            [yY]) exec "${0}" "${@}";;
+          esac
+
+          isdone
+        else
+          echo "Update failed :(("
+        fi
       else
-        echo "Update failed :(("
+        echo "Scripts read-only :(("
       fi
     else
-      echo "Scripts read-only :(("
+      echo "Scripts up-to-date! :))"
     fi
-  else
-    echo "Scripts up-to-date! :))"
+
+    printf "\n"
   fi
 
-  printf "\n"
+  gStr=""
+  gStartup="$(diskutil info / | awk '/Identifier/' | grep -o -e disk[[:digit:]]*)"
+
+  printf "${gMsgStart}"
+
+  for gArg in "${aEFI[@]}"
+  do
+    gDevice=$(echo "${gArg}" | grep -o -e disk[[:digit:]]*)
+    gInfo=$(diskutil info "${gDevice}" | grep 'Media Name:' | sed -e 's/.*://;s/^ *//')
+
+    aPar+=("${gArg}")
+    aDisk+=("${gDevice}")
+    aLabel+=("${gInfo}")
+    C_HI=$C_BLACK
+
+    if [[ "${gStartup}" == "${gDevice}" ]]; then
+      C_HI=$C_BLUE
+      (($gAuto)) && gChoose=$i
+    fi
+
+    gStr+="[${C_HI}${i}${C_BLACK}]\t| ${C_HI}${gArg}${C_BLACK}\t| ${C_HI}${gInfo}${C_BLACK}\n"
+
+    let i++
+  done
+
+  printf "${gStr}\n"
+
+  ((!$gAuto)) && read -p "Choose [#]: " gChoose
+
+  if [[ "${gChoose}" =~ ^[[:digit:]]+$ ]] && [[ $gChoose -lt $gEFITotal ]]; then
+    gDisk=${aDisk[$gChoose]}
+    gPar=${aPar[$gChoose]}
+    gLabel=${aLabel[$gChoose]}
+    gOEFI=$(df | grep "${gPar}")
+
+    (($gAuto)) && printf "Auto mount EFI on: ${gDisk} .."
+    printf "\nMounting: ${gPar} (on ${gLabel}) ..\n"
+
+    [[ ! -z "${gOEFI}" ]] && diskutil unmount "${gPar}"
+
+    diskutil mount "${gPar}"
+
+    mEFI=$(diskutil info "${gPar}" | grep 'Mount Point:' | sed -e 's/.*://;s/^ *//')
+
+    printf "Mounted on: ${mEFI} ..\n"
+
+    if [[ $gOpen -ne 0 ]]; then
+      printf "Auto open EFI directory ..\n"
+      open "${mEFI}"
+    fi
+  fi
+}
+
+#printf "${gMsgError}"
+#isdone
+
+# Check if we are root
+if [[ $gID -ne 0 &&  $gDebug -eq 0 ]]; then
+  # Re-run the script as root
+  echo "This script needs to be run as root."
+  sudo "${0}" "$@"
+else
+  # We are root, so just call the main function
+  main "$@"
 fi
-
-gStr=""
-gStartup="$(diskutil info / | awk '/Identifier/' | grep -o -e disk[[:digit:]]*)"
-
-printf "`cat <<EOF
-Getting EFI disks ..
-
-Choose one from available devices:
-[${C_BLUE}#${C_BLACK}] is current startup disk!
-
-------+-----------+--------------------------
-[#]\t| Partition\t| Label
-------+-----------+--------------------------\n
-EOF`"
-
-for gArg in "${aEFI[@]}"
-do
-  gDevice=$(echo "${gArg}" | grep -o -e disk[[:digit:]]*)
-  gInfo=$(diskutil info "${gDevice}" | grep 'Media Name:' | sed -e 's/.*://;s/^ *//')
-
-  aPar+=("${gArg}")
-  aDisk+=("${gDevice}")
-  aLabel+=("${gInfo}")
-  C_HI=$C_BLACK
-
-  if [[ "${gStartup}" == "${gDevice}" ]]; then
-    C_HI=$C_BLUE
-    (($gAuto)) && gChoose=$i
-  fi
-
-  gStr+="[${C_HI}${i}${C_BLACK}]\t| ${C_HI}${gArg}${C_BLACK}\t| ${C_HI}${gInfo}${C_BLACK}\n"
-
-  let i++
-done
-
-printf "${gStr}\n"
-
-((!$gAuto)) && read -p "Choose [#]: " gChoose
-
-if [[ "${gChoose}" =~ ^[[:digit:]]+$ ]] && [[ $gChoose -lt $gEFITotal ]]; then
-  gDisk=${aDisk[$gChoose]}
-  gPar=${aPar[$gChoose]}
-  gLabel=${aLabel[$gChoose]}
-  gOEFI=$(df | grep "${gPar}")
-
-  (($gAuto)) && printf "Auto mount EFI on: ${gDisk} .."
-  printf "\nMounting: ${gPar} (on ${gLabel}) ..\n"
-
-  [[ ! -z "${gOEFI}" ]] && diskutil unmount "${gPar}"
-
-  diskutil mount "${gPar}"
-
-  mEFI=$(diskutil info "${gPar}" | grep 'Mount Point:' | sed -e 's/.*://;s/^ *//')
-
-  printf "Mounted on: ${mEFI} ..\n"
-
-  if [[ $gOpen -ne 0 ]]; then
-    printf "Auto open EFI directory ..\n"
-    open "${mEFI}"
-  fi
-fi
-
-#printf "${gMSG}"
-isdone
