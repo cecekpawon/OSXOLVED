@@ -13,9 +13,6 @@ Apple EFI/FFS Extractor
 ---
 */
 
-$FF = "IM191.fd";
-$FF = "MP61.scap";
-$FF = "IM131.scap";
 $FF = "MBP143.fd";
 
 $UEFIExtract = "UEFIExtract";
@@ -68,7 +65,7 @@ if (file_exists ("$FF")) {
   $outputdir .= "/$FF";
   $FF = normalise_path (realpath ("$FF"));
 } else {
-  die "! $FF not exists!\n";
+  die ("! $FF not exists!\n");
 }
 
 $outputdir = normalise_path ("$outputdir");
