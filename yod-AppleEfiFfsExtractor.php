@@ -65,7 +65,8 @@ $aUEFIExtract = array (
 
                   "UserInterfaceThemeDriver" =>
                     array (
-                      "BC468182-0C0B-D645-A8AC-FB5D81076AE8"
+                      "BC468182-0C0B-D645-A8AC-FB5D81076AE8",
+                      "6A504489-884E-4465-A02F-03B248CDEF13"
                       ),
 
                   "EnglishDxe" =>
