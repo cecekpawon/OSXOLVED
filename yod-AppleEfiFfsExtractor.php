@@ -137,8 +137,7 @@ $outputdir = normalise_path ("$outputdir");
 if (file_exists ("$UEFIExtract")) {
   $UEFIExtract = normalise_path (realpath ("$UEFIExtract"));
 } else {
-  die ("! $UEFIExtract not exists!\n");
-  die ("! Download UEFIExtract (https://github.com/LongSoft/UEFITool/releases)\n");
+  die ("! $UEFIExtract not exists. Download UEFIExtract (https://github.com/LongSoft/UEFITool/releases)\n");
 }
 
 passthru ("cd $cdir");
