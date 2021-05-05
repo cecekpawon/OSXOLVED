@@ -4,7 +4,7 @@
 # @cecekpawon Sat Jun 18 13:31:35 2016 WIB
 # thrsh.net
 
-gVer=1.1
+gVer=1.2
 gTITLE="OpenGate v${gVer}"
 gUname="cecekpawon"
 gME="@${gUname} | thrsh.net"
@@ -101,4 +101,4 @@ main() {
   fi
 }
 
-main
+main "$@"
